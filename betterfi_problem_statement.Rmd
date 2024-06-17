@@ -1,5 +1,5 @@
 ---
-title: "problem-statement"
+title: "problem_statement"
 author: "Gavin Clark"
 date: "2024-06-17"
 output: html_document
