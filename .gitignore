@@ -1,0 +1,8 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+#hides html and ds store files
+**/*.html
+**/*.DS_Store
