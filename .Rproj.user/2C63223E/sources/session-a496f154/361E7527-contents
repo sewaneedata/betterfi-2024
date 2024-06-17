@@ -2,9 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-<<<<<<< HEAD
 =======
 
 # hide the html files
 **/*.html
->>>>>>> bbd611b6ba8da94478d03bc43521812e423c6e1c
