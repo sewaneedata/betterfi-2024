@@ -36,4 +36,4 @@ tn_acs <- get_acs(geography = "tract",
                   year = 2022,
                   geometry = TRUE)
 tn_acs <- tn_acs %>% 
-  filter(NAME == "Hamilton County, Tennessee")
+  filter(NAME == "Hamilton County, Tennessee") #does not work anymore bc census tracts included in tidycensus
