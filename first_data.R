@@ -25,6 +25,7 @@ test_acs <- load_variables(year = 2022, dataset = "acs1", cache = TRUE)
 
 tn_acs <- get_acs(geography = "tract", 
                   state = "TN",
+                  county = "Hamilton",
                   variables = c(
                     gross_rent1 = "B25063_001",
                     gross_rent2 = "B25063_002",
@@ -33,7 +34,7 @@ tn_acs <- get_acs(geography = "tract",
                     median_gross_rent_bedroom = "B25064_001",
                     poverty_income = "B23024_002"
                   ),
+                  summary_var = "B01003_001",
                   year = 2022,
                   geometry = TRUE)
-tn_acs <- tn_acs %>% 
-  filter(NAME == "Hamilton County, Tennessee") #does not work anymore bc census tracts included in tidycensus
+
