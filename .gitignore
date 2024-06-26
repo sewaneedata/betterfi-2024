@@ -12,3 +12,5 @@
 **/*.db
 **/*.js
 **/*.css
+data
+**/census_api_key.txt
