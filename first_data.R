@@ -12,14 +12,29 @@ library(rnaturalearth)
 library(rnaturalearthdata)
 library(rnaturalearthhires)
 library(sf)
+library(tidygeocoder)
+
+#set working directory
+# setwd("/Users/buchananlindsey/Desktop/buck_datalab/betterfi-2024/data")
+
 
 #Api key(opetional if needed)
 # api_key <- readLines("data/census_api_key.txt")
 # census_api_key(api_key)
 
-#call data for lender locations
-lender_info <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1x9KSndXG_z2PusNq0ThaQF40VmzJ7G5A/edit?usp=sharing&ouid=113284526452189132173&rtpof=true&sd=true")
+#call data for lender locations from GOOGLE DRIVE
+payday_info <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1x9KSndXG_z2PusNq0ThaQF40VmzJ7G5A/edit?gid=1545321409#gid=1545321409")
 
+flex_info <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1x9KSndXG_z2PusNq0ThaQF40VmzJ7G5A/edit?gid=525051790#gid=525051790")
+
+title_info <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1x9KSndXG_z2PusNq0ThaQF40VmzJ7G5A/edit?gid=1401445265#gid=14014452650")
+
+#merge data 
+
+total_info <- rbind(payday_info, title_info, flex_info) 
+total_info<-distinct(total_info, Street, .keep_all=TRUE)
+total_info <- total_info %>% 
+  rename(postal_code = `Postal Code`)
 #which company has the most locations?
 lender_info %>% 
   group_by(`Company Name`) %>% 
@@ -32,9 +47,7 @@ ACS_2022_vars <- read_xlsx("data/ACS2022_Table_Shells.xlsx")
 #call ACS variables from 2022
 acs_2022 <- load_variables(year = 2022, dataset = "acs1", cache = TRUE)
 
-# #map mode
-# tmap_mode("plot")
-# tmap_mode("view")
+
 
 
 
@@ -109,7 +122,46 @@ pivot_first_acs <- first_acs %>%
   select(-moe) %>% 
   pivot_wider(names_from = variable, values_from = estimate)
 
+# #map mode
+# tmap_mode("plot")
+tmap_mode("view")
+
 #heat map for income level below poverty line and unployed population 
 tm_shape(pivot_first_acs) +
-  tm_polygons(alpha = 0.8, col = c('poverty_income', 'unemployed')) +
+  tm_polygons(alpha = 0.8, col = c('poverty_income', 'unemployed'), id = "NAME") +
   tm_facets(as.layers = TRUE) #makes several layered maps that you can toggle between
+
+
+#tidygeocoder work
+
+# lat_longs <- lender_info %>%
+#   geocode(street = "Street", city = "City", postalcode = "Postal Code", state = "State", , country = "Country", method = 'osm', lat = latitude , long = longitude)
+
+#create address column for lender_info
+total_info <- total_info %>% 
+  mutate(full_address = paste0(Street,", ",City)) %>% 
+  mutate(full_address = paste0(full_address,", ",State)) %>% 
+  mutate(full_address = paste0(full_address," ",postal_code))
+
+#Create Loan Type Column: displays Title, Payday, Flex, or combination of the three depending on if the loan location belongs to one or many of the initial datasets
+total_info <- total_info %>% 
+  mutate(loan_type = case_when(
+    Street %in% flex_info$Street & Street %in% title_info$Street & Street %in% payday_info$Street ~ "Flex, Title, Payday",
+    Street %in% flex_info$Street & Street %in% title_info$Street ~ "Flex, Title",
+    Street %in% flex_info$Street & Street %in% payday_info$Street ~ "Flex, Payday",
+    Street %in% title_info$Street & Street %in% payday_info$Street ~ "Flex, Payday",
+    Street %in% flex_info$Street ~ "Flex",
+    Street %in% payday_info$Street ~ "Payday",
+    Street %in% title_info$Street ~ "Title",
+    TRUE ~ NA_character_))
+
+
+
+  
+  
+
+# Use the geocode function to get latitude and longitude
+# lat_long <- geo(address = lender_info$full_address, method = 'osm')
+# 
+# missing_lat_long <- lat_long %>% 
+#   filter(is.na(lat) | is.na(long))
