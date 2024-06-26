@@ -26,7 +26,7 @@ lender_info %>%
   arrange(desc(n))
 
 
-test <- read_xlsx("ACS2022_Table_Shells.xlsx")
+test <- read_xlsx("data/ACS2022_Table_Shells.xlsx")
 
 
 test_acs <- load_variables(year = 2022, dataset = "acs1", cache = TRUE)
@@ -54,9 +54,6 @@ poverty_level <- tn_acs %>% filter(variable == "poverty_income")
 tm_shape(poverty_level) +
   tm_polygons(alpha = 0.8, col = 'estimate')
 
-census_api_key('')
-
-
 
 #kyle
 n_acs <- get_acs(geography = "tract",
@@ -82,7 +79,7 @@ n_acs <- get_acs(geography = "tract",
                    btwn20kand34999 = "C25122_012",
                    btwn35kand49999 = "C25122_017",
                    btwn50kand74999 = "C25122_022",
-                   nevermarried = "B26104_002" #group quarters type by marital status starts here
+                   nevermarried = "B26104_002", #group quarters type by marital status starts here
                    nowmarried = "B26104_003",
                    seperated = "B26104_004",
                    widowed = "B26104_005",

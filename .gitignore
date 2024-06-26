@@ -1,4 +1,4 @@
-.Rproj.user
+.Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
@@ -12,5 +12,5 @@
 **/*.db
 **/*.js
 **/*.css
-data
+data/
 **/census_api_key.txt
