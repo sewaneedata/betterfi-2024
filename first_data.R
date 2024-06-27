@@ -13,10 +13,10 @@ library(rnaturalearthdata)
 library(rnaturalearthhires)
 library(sf)
 library(tidygeocoder)
+library(mapsapi)
 
 #set working directory
 # setwd("/Users/buchananlindsey/Desktop/buck_datalab/betterfi-2024/data")
-
 
 #Api key(opetional if needed)
 # api_key <- readLines("data/census_api_key.txt")
@@ -254,3 +254,14 @@ test_cleaning %>% filter(is.na(lat) | is.na(long)) %>% print(n = 112)
 
 
 
+
+
+#using GoogleApi Package
+
+#set key
+key = "AIzaSyAaG4e9IKfLvQBEbyUMY2ko-02UjFHe1LQ"
+
+#
+test <- mp_geocode(addresses = "1016 Gallatin Pike South Madison, TN 37115", key = "AIzaSyAaG4e9IKfLvQBEbyUMY2ko-02UjFHe1LQ", quiet = TRUE)
+
+pnt = mp_get_points(test)
