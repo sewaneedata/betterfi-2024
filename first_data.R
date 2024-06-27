@@ -36,7 +36,7 @@ total_info<-distinct(total_info, Street, .keep_all=TRUE)
 total_info <- total_info %>% 
   rename(postal_code = `Postal Code`)
 #which company has the most locations?
-lender_info %>% 
+total_info %>% 
   group_by(`Company Name`) %>% 
   tally() %>% 
   arrange(desc(n))
@@ -183,7 +183,6 @@ total_info <- total_info %>%
 
 #16952A Rankin Ave, Dunlap, TN 37327
 #16952 Rankin Ave, Dunlap, TN 37327, NO LETTER AFTER STREET NUMBER
-
 
 # 718 Gallatin Road, Nashville, TN 37206
 # 718 Gallatin Ave, Nashville, TN 37206
