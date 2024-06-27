@@ -132,7 +132,7 @@ tm_shape(pivot_first_acs) +
 #tidygeocoder work
 
 # lat_longs <- lender_info %>%
-#   geocode(street = "Street", city = "City", postalcode = "Postal Code", state = "State", , country = "Country", method = 'osm', lat = latitude , long = longitude)
+# geocode(street = "Street", city = "City", postalcode = "Postal Code", state = "State", , country = "Country", method = 'osm', lat = latitude , long = longitude)
 
 #Create Loan Type Column: displays Title, Payday, Flex, or combination of the three depending on if the loan location belongs to one or many of the initial datasets
 total_info <- total_info %>% 
