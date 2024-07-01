@@ -16,7 +16,7 @@ library(tidygeocoder)
 library(mapsapi)
 
 #set working directory
-setwd("/Users/buchananlindsey/Desktop/buck_datalab/betterfi-2024/data")
+setwd("/Users/buchananlindsey/Desktop/buck_datalab/betterfi-2024/")
 
 #load data
 
@@ -136,9 +136,9 @@ ACS_income_hamilton <- ACS_income_hamilton %>%
   select(-contains("Nonfamily")) 
 
 #Select just Average Income, Pivot Longer to have just one row per census tract
-ACS_income_hamilton <- ACS_income_hamilton[13, ]
+ACS_income_hamilton <- ACS_income_hamilton[13, ] #select just row 13 which is average income
 ACS_income_hamilton <- ACS_income_hamilton %>% 
-  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "avg_income")
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "avg_income") 
 
 #change census names to match "hamilton_tract"
 ACS_income_hamilton$NAME <-  gsub("!.*", "", ACS_income_hamilton$NAME)
