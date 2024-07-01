@@ -70,6 +70,8 @@ hamilton_tract <- get_acs(geography = "tract",
                      county = "Hamilton",
                      year = 2022,
                      geometry = TRUE)
+
+
 tmap_mode("view")
 tm_shape(hamilton_tract)+
   tm_polygons()
@@ -107,21 +109,71 @@ idx <- apply(m, 1, which)
 # now get the corresponding census tract names 
 hamilton_county_lenders$tract <- hamilton_tract$NAME[idx]
 
+
+#create dataset for lenders per tract
 lenders_per_tract <- hamilton_county_lenders %>% 
   st_drop_geometry() %>%
   group_by( tract ) %>% 
   tally( name = "n_lenders") %>%
   arrange( desc(n_lenders) )
 
+#left join lender_per_tract to Hamilton geometry dataset
 hamilton_tract <- left_join( hamilton_tract, lenders_per_tract %>% rename( NAME = tract ), by = "NAME" )
 
+#create lender heat map
 tm_shape( hamilton_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 
-  # mutate(num_lenders = length(st_within(geometry, hamilton_points))) 
-  
+#create average income for each census tract
+
+
+#Get ACS Income Data for Income
+
+#Just Hamilton County
+ACS_income_hamilton <- read_csv("ACS5_hamilton_income.csv")
+ACS_income_hamilton <- ACS_income_hamilton %>% 
+  select(-contains("Margin of Error")) %>% 
+  select(contains("Household")) %>% 
+  select(-contains("Nonfamily")) 
+
+#Select just Average Income, Pivot Longer to have just one row per census tract
+ACS_income_hamilton <- ACS_income_hamilton[13, ]
+ACS_income_hamilton <- ACS_income_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "avg_income")
+
+#change census names to match "hamilton_tract"
+ACS_income_hamilton$NAME <-  gsub("!.*", "", ACS_income_hamilton$NAME)
+ACS_income_hamilton$NAME <- gsub(",", ";", ACS_income_hamilton$NAME)
+
+#join avg_income to Hamilton_tract
+hamilton_tract <- hamilton_tract %>% 
+  left_join(ACS_income_hamilton, by = "NAME")
+
+hamilton_tract$avg_income <- gsub(",", "", hamilton_tract$avg_income)
+
+#create income level groups
+hamilton_tract<- hamilton_tract %>% 
+  mutate(avg_income = ifelse(avg_income == '-', NA, avg_income)) %>% 
+  mutate(avg_income = as.numeric(avg_income)) %>% 
+  mutate(avg_income_group = case_when(
+    avg_income < 29999 ~ "<30k",
+    avg_income >= 30000 & avg_income < 49999 ~ "30k-50k",
+    avg_income >= 50000 & avg_income < 69999 ~ "50k-70k",
+    avg_income >= 70000 & avg_income < 89999 ~ "70k-90k",
+    avg_income >= 90000 & avg_income < 109999 ~ "90k-110k",
+    avg_income >= 110000 & avg_income < 129999 ~ "110k-130k",
+    avg_income >= 130000 & avg_income < 149999 ~ "130k-150k",
+    avg_income >= 150000 & avg_income < 169999 ~ "150k-170k",
+    avg_income >= 170000 & avg_income < 189999 ~ "170k-190k",
+    avg_income > 190000 ~ ">190k",
+    TRUE~NA
+  ) ) %>% 
+  mutate(avg_income_group=fct_reorder(factor(avg_income_group), avg_income, .na_rm = TRUE))#factor reorder for viewing ease
+
+#create chloropleth for income
+tm_shape(hamilton_tract)+
+  tm_polygons( col = "avg_income_group", id="NAME", palette = "Blues")
 
 
 
-st_crs(hamilton_tract$geometry) <- st_crs(hamilton_points)
 
-within <- st_within(total_lender_info$pnt, hamilton_county_poly)
+

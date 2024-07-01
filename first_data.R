@@ -125,7 +125,7 @@ tmap_mode("view")
 
 #heat map for income level below poverty line and unployed population 
 tm_shape(pivot_first_acs) +
-  tm_polygons(alpha = 0.8, col = c('poverty_income', 'unemployed'), id = "NAME") +
+  tm_polygons(alpha = 0.8, col = c('poverty_income', 'unemployed', 'diploma'), id = "NAME") +
   tm_facets(as.layers = TRUE) #makes several layered maps that you can toggle between
 
 
