@@ -317,3 +317,71 @@ hamilton_tract <- hamilton_tract %>%
   left_join(acs_hawaiian_hamilton, by = "NAME")
 hamilton_tract <- hamilton_tract %>% 
   left_join(acs_otherrace_hamilton, by = "NAME")
+
+#####
+
+#loads food stamp/snap in past 12 months by poverty status data csv
+acs_snapbypoverty <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_foodstamp_snap_by_poverty_hamilton.csv")
+
+#removes margin of error columns
+acs_snapbypoverty <- acs_snapbypoverty %>% 
+  select(-contains("Margin of Error"))
+
+
+#keeps rows for food stamps and snap assistance based income on above and below poverty level
+acs_snapincbelowpvl <- acs_snapbypoverty[3, ]
+acs_snapincabovepvl <- acs_snapbypoverty[4, ]
+acs_nosnapincbelowpvl <- acs_snapbypoverty[6, ]
+acs_nosnapincabovepvl <- acs_snapbypoverty[7, ]
+
+
+#these next lines pivot longer for 
+acs_snapincbelowpvl <- acs_snapincbelowpvl %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "snapincomebelowpoverty") 
+acs_snapincabovepvl <- acs_snapincabovepvl %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "snapincomeabovepoverty") 
+acs_nosnapincbelowpvl <- acs_nosnapincbelowpvl %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "nosnapincomebelowpoverty") 
+acs_nosnapincabovepvl <- acs_nosnapincabovepvl %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "nosnapincomeabovepoverty") 
+
+
+
+acs_snapincbelowpvl$NAME <-  gsub("!.*", "", acs_snapincbelowpvl$NAME)
+acs_snapincbelowpvl$NAME <- gsub(",", ";", acs_snapincbelowpvl$NAME)
+acs_snapincabovepvl$NAME <-  gsub("!.*", "", acs_snapincabovepvl$NAME)
+acs_snapincabovepvl$NAME <- gsub(",", ";", acs_snapincabovepvl$NAME)
+acs_nosnapincbelowpvl$NAME <-  gsub("!.*", "", acs_nosnapincbelowpvl$NAME)
+acs_nosnapincbelowpvl$NAME <- gsub(",", ";", acs_nosnapincbelowpvl$NAME)
+acs_nosnapincabovepvl$NAME <-  gsub("!.*", "", acs_nosnapincabovepvl$NAME)
+acs_nosnapincabovepvl$NAME <- gsub(",", ";", acs_nosnapincabovepvl$NAME)
+
+
+
+acs_snapincbelowpvl <- acs_snapincbelowpvl %>% select(NAME,snapincomebelowpoverty)
+acs_snapincabovepvl <- acs_snapincabovepvl %>% select(NAME,snapincomeabovepoverty)
+acs_nosnapincbelowpvl <- acs_nosnapincbelowpvl %>% select(NAME,nosnapincomebelowpoverty)
+acs_nosnapincabovepvl <- acs_nosnapincabovepvl %>% select(NAME,nosnapincomeabovepoverty)
+
+
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_snapincbelowpvl, by = "NAME")
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_snapincabovepvl, by = "NAME")
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_nosnapincbelowpvl, by = "NAME")
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_nosnapincabovepvl, by = "NAME")
+
+
+
+
+
+# #loads marital status data as csv from acs
+# acs_marital <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_marital.csv")
+# acs_marital <- acs_marital %>% 
+#   select(-contains("Margin of Error"))
+# acs_maritaloverall <- acs_marital[1, ]
+# acs_maritaloverall <- acs_maritaloverall %>% 
+#   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME") 
