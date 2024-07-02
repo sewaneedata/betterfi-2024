@@ -341,16 +341,27 @@ hamilton_tract <- hamilton_tract %>%
 #loads median gross rent
 acs_gross_rent <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_gross_rent.csv")
 
+#clears margins of error columns
 acs_gross_rent <- acs_gross_rent %>% 
   select(-contains("Margin of Error"))
 
-acs_gross_rent <- acs_gross_rent %>% 
-  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "mediangrossrent") 
+#converts columns to as character in order to pivot longer
+acs_gross_rent <- acs_gross_rent %>%
+  mutate(across(starts_with("Census Tract"), as.character))
 
-# #loads marital status data as csv from acs
-# acs_marital <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_marital.csv")
-# acs_marital <- acs_marital %>% 
-#   select(-contains("Margin of Error"))
-# acs_maritaloverall <- acs_marital[1, ]
-# acs_maritaloverall <- acs_maritaloverall %>% 
-#   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME") 
+#pivots longer flipping data so census tracts are 1 column instead of however many
+acs_gross_rent <- acs_gross_rent %>% 
+  pivot_longer(cols = starts_with("Census Tract"), 
+               names_to = "NAME", 
+               values_to = "mediangrossrent")
+
+#cleans census tract column a little
+acs_gross_rent$NAME <-  gsub("!.*", "", acs_gross_rent$NAME)
+acs_gross_rent$NAME <- gsub(",", ";", acs_gross_rent$NAME)
+
+#removes label column, only keeping rent and census tract name
+acs_gross_rent <- acs_gross_rent %>% select(NAME,mediangrossrent)
+
+#joins gross rent data to hamilton_tract dataset
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_gross_rent, by = "NAME")
