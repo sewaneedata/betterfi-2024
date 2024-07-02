@@ -60,7 +60,7 @@ total_info <- total_info %>%
 #save new data for coordinates
 # save(total_lender_info, file="total_lender_info.RData")
 
-load("total_lender_info.RData") 
+load("D:/kyle_datalab/betterfi-2024/data/total_lender_info.RData") 
 
 
 #load geography information
@@ -124,6 +124,21 @@ hamilton_tract <- left_join( hamilton_tract, lenders_per_tract %>% rename( NAME 
 tm_shape( hamilton_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 
 #create average income for each census tract
+
+acstotalpophamilton <- read_csv("D:/kyle_datalab/betterfi-2024/data/acshamiltonpop.csv")
+acstotalpophamilton <- acstotalpophamilton %>% 
+  select(-contains("Margin of Error"))
+
+acstotalpophamilton <- acstotalpophamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "total_population") 
+
+acstotalpophamilton$NAME <-  gsub("!.*", "", acstotalpophamilton$NAME)
+acstotalpophamilton$NAME <- gsub(",", ";", acstotalpophamilton$NAME)
+
+acstotalpophamilton <- acstotalpophamilton %>% select(NAME,total_population)
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acstotalpophamilton, by = "NAME")
 
 
 #Get ACS Income Data for Income
@@ -204,22 +219,10 @@ acs_noncitizen_hamilton <- acs_noncitizen_hamilton %>% select(NAME,noncitizens)
 hamilton_tract <- hamilton_tract %>% 
   left_join(acs_noncitizen_hamilton, by = "NAME")
 
+
+
+
 #####
-
-acstotalpophamilton <- read_csv("D:/kyle_datalab/betterfi-2024/data/acshamiltonpop.csv")
-acstotalpophamilton <- acstotalpophamilton %>% 
-  select(-contains("Margin of Error"))
-
-acstotalpophamilton <- acstotalpophamilton %>% 
-  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "population") 
-
-acstotalpophamilton$NAME <-  gsub("!.*", "", acstotalpophamilton$NAME)
-acstotalpophamilton$NAME <- gsub(",", ";", acstotalpophamilton$NAME)
-
-acstotalpophamilton <- acstotalpophamilton %>% select(NAME,population)
-
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acstotalpophamilton, by = "NAME")
 
 ####
 
@@ -246,6 +249,9 @@ hamilton_tract <- hamilton_tract %>%
   left_join(acs_hispanic_hamilton, by = "NAME")#joins hispanic individuals dataset to the main dataset
 hamilton_tract <- hamilton_tract %>% 
   left_join(acs_nonhispanic_hamilton, by = "NAME")#joins nonhispanic individuals to the main dataset
+
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_hispaniclat = (hispaniclat/total_population)*100)
 
 #####
 
@@ -318,65 +324,28 @@ hamilton_tract <- hamilton_tract %>%
 hamilton_tract <- hamilton_tract %>% 
   left_join(acs_otherrace_hamilton, by = "NAME")
 
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_white = (white/total_population)*100)
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_black = (black/total_population)*100)
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_nativeamerican = (nativeamerican/total_population)*100)
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_hawaiianorislander = (hawaiianorislander/total_population)*100)
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_otherrace = (otherrace/total_population)*100)
+
+
 #####
 
-#loads food stamp/snap in past 12 months by poverty status data csv
-acs_snapbypoverty <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_foodstamp_snap_by_poverty_hamilton.csv")
+#loads median gross rent
+acs_gross_rent <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_gross_rent.csv")
 
-#removes margin of error columns
-acs_snapbypoverty <- acs_snapbypoverty %>% 
+acs_gross_rent <- acs_gross_rent %>% 
   select(-contains("Margin of Error"))
 
-
-#keeps rows for food stamps and snap assistance based income on above and below poverty level
-acs_snapincbelowpvl <- acs_snapbypoverty[3, ]
-acs_snapincabovepvl <- acs_snapbypoverty[4, ]
-acs_nosnapincbelowpvl <- acs_snapbypoverty[6, ]
-acs_nosnapincabovepvl <- acs_snapbypoverty[7, ]
-
-
-#these next lines pivot longer for 
-acs_snapincbelowpvl <- acs_snapincbelowpvl %>% 
-  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "snapincomebelowpoverty") 
-acs_snapincabovepvl <- acs_snapincabovepvl %>% 
-  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "snapincomeabovepoverty") 
-acs_nosnapincbelowpvl <- acs_nosnapincbelowpvl %>% 
-  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "nosnapincomebelowpoverty") 
-acs_nosnapincabovepvl <- acs_nosnapincabovepvl %>% 
-  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "nosnapincomeabovepoverty") 
-
-
-
-acs_snapincbelowpvl$NAME <-  gsub("!.*", "", acs_snapincbelowpvl$NAME)
-acs_snapincbelowpvl$NAME <- gsub(",", ";", acs_snapincbelowpvl$NAME)
-acs_snapincabovepvl$NAME <-  gsub("!.*", "", acs_snapincabovepvl$NAME)
-acs_snapincabovepvl$NAME <- gsub(",", ";", acs_snapincabovepvl$NAME)
-acs_nosnapincbelowpvl$NAME <-  gsub("!.*", "", acs_nosnapincbelowpvl$NAME)
-acs_nosnapincbelowpvl$NAME <- gsub(",", ";", acs_nosnapincbelowpvl$NAME)
-acs_nosnapincabovepvl$NAME <-  gsub("!.*", "", acs_nosnapincabovepvl$NAME)
-acs_nosnapincabovepvl$NAME <- gsub(",", ";", acs_nosnapincabovepvl$NAME)
-
-
-
-acs_snapincbelowpvl <- acs_snapincbelowpvl %>% select(NAME,snapincomebelowpoverty)
-acs_snapincabovepvl <- acs_snapincabovepvl %>% select(NAME,snapincomeabovepoverty)
-acs_nosnapincbelowpvl <- acs_nosnapincbelowpvl %>% select(NAME,nosnapincomebelowpoverty)
-acs_nosnapincabovepvl <- acs_nosnapincabovepvl %>% select(NAME,nosnapincomeabovepoverty)
-
-
-
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_snapincbelowpvl, by = "NAME")
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_snapincabovepvl, by = "NAME")
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_nosnapincbelowpvl, by = "NAME")
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_nosnapincabovepvl, by = "NAME")
-
-
-
-
+acs_gross_rent <- acs_gross_rent %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "mediangrossrent") 
 
 # #loads marital status data as csv from acs
 # acs_marital <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_marital.csv")
