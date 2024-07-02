@@ -143,7 +143,6 @@ acstotalpophamilton <- acstotalpophamilton %>% select(NAME,total_population)
 hamilton_tract <- hamilton_tract %>% 
   left_join(acstotalpophamilton, by = "NAME") 
 
-
 #create average income for each census tract
 #Get ACS Income Data for Income
 #Just Hamilton County
@@ -191,7 +190,6 @@ hamilton_tract<- hamilton_tract %>%
 tm_shape(hamilton_tract)+
   tm_polygons( col = "avg_income_group", id="NAME", palette = "Blues")
 
-
 #load citizen data
 acs_citizen <- read_csv("data/acs_nativity_citizenshiphamilton.csv")
 
@@ -226,12 +224,14 @@ hamilton_tract <- hamilton_tract %>%
   left_join(acs_citizen_hamilton, by = "NAME")
 
 hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_noncitizen_hamilton, by = "NAME")
+  left_join(acs_noncitizen_hamilton, by = "NAME") 
 
 #mutate %citizen and %noncitizen
 hamilton_tract <- hamilton_tract %>% 
   mutate(percent_citizen = (citizens/total_population)*100) %>% 
-  mutate(percent_noncitizen = (noncitizens/total_population)*100)
+  mutate(percent_noncitizen = (noncitizens/total_population)*100)%>% 
+  select(-"citizens") %>% 
+  select(-"noncitizens")
 
 #load education data
 hamilton_edu <- read_csv("data/education_level.csv")
@@ -287,5 +287,9 @@ tm_shape(hamilton_tract)+
   tm_polygons(col = "total_percent_highschool")
 
 
+#load marital data
+acs_marital <- read_csv("data/acs_marital.csv") 
 
-
+acs_marital <- acs_marital %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "values") %>% 
+  pivot_wider(cols = "NAME", names_from = "NAME", values_from = "value")
