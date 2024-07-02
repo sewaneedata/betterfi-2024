@@ -324,6 +324,7 @@ hamilton_tract <- hamilton_tract %>%
 hamilton_tract <- hamilton_tract %>% 
   left_join(acs_otherrace_hamilton, by = "NAME")
 
+#creates new race into percentages
 hamilton_tract <- hamilton_tract %>% 
   mutate(percent_white = (white/total_population)*100)
 hamilton_tract <- hamilton_tract %>% 
