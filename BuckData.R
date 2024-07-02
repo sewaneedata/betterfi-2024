@@ -16,7 +16,7 @@ library(tidygeocoder)
 library(mapsapi)
 
 #set working directory
-setwd("/Users/buchananlindsey/Desktop/buck_datalab/betterfi-2024/data")
+# setwd("/Users/buchananlindsey/Desktop/buck_datalab/betterfi-2024/data")
 
 #load data
 
@@ -60,7 +60,7 @@ total_info <- total_info %>%
 #save new data for coordinates
 # save(total_lender_info, file="total_lender_info.RData")
 
-load("total_lender_info.RData") 
+load("data/total_lender_info.RData") 
 
 
 #load geography information
@@ -129,7 +129,7 @@ tm_shape( hamilton_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 #Get ACS Income Data for Income
 
 #Just Hamilton County
-ACS_income_hamilton <- read_csv("ACS5_hamilton_income.csv")
+ACS_income_hamilton <- read_csv("data/ACS5_hamilton_income.csv")
 ACS_income_hamilton <- ACS_income_hamilton %>% 
   select(-contains("Margin of Error")) %>% 
   select(contains("Household")) %>% 
@@ -175,5 +175,5 @@ tm_shape(hamilton_tract)+
 
 
 #load Education Data
-hamilton_education <- read_csv("education_level.csv")
+hamilton_education <- read_csv("data/education_level.csv")
 
