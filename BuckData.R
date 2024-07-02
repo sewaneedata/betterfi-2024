@@ -123,6 +123,27 @@ hamilton_tract <- left_join( hamilton_tract, lenders_per_tract %>% rename( NAME 
 #create lender heat map
 tm_shape( hamilton_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 
+#load total pop data
+acstotalpophamilton <- read_csv("data/acshamiltonpop.csv")
+
+#clean pop data
+acstotalpophamilton <- acstotalpophamilton %>% 
+  select(-contains("Margin of Error"))
+
+acstotalpophamilton <- acstotalpophamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "total_population") 
+
+#match tract names with hamilton_tract
+acstotalpophamilton$NAME <-  gsub("!.*", "", acstotalpophamilton$NAME)
+acstotalpophamilton$NAME <- gsub(",", ";", acstotalpophamilton$NAME)
+
+acstotalpophamilton <- acstotalpophamilton %>% select(NAME,total_population)
+
+#left_join pop data to hamilton_tract
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acstotalpophamilton, by = "NAME") 
+
+
 #create average income for each census tract
 
 
@@ -174,6 +195,96 @@ tm_shape(hamilton_tract)+
   tm_polygons( col = "avg_income_group", id="NAME", palette = "Blues")
 
 
-#load Education Data
-hamilton_education <- read_csv("data/education_level.csv")
+#load citizen data
+acs_citizen <- read_csv("data/acs_nativity_citizenshiphamilton.csv")
+
+#clean citizen data and names
+acs_citizen <- acs_citizen %>% 
+  select(-contains("Margin of Error"))
+
+#select citizen rows for left_join
+acs_citizen_hamilton <- acs_citizen[2, ]
+acs_noncitizen_hamilton <- acs_citizen[6, ]
+
+#pivot for left_join
+acs_citizen_hamilton <- acs_citizen_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "citizens") 
+
+acs_noncitizen_hamilton <- acs_noncitizen_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "noncitizens") 
+
+#change census names to match "hamilton_tract"
+acs_citizen_hamilton$NAME <-  gsub("!.*", "", acs_citizen_hamilton$NAME)
+acs_citizen_hamilton$NAME <- gsub(",", ";", acs_citizen_hamilton$NAME)
+
+acs_citizen_hamilton <- acs_citizen_hamilton %>% select(NAME,citizens)
+
+acs_noncitizen_hamilton$NAME <-  gsub("!.*", "", acs_noncitizen_hamilton$NAME)
+acs_noncitizen_hamilton$NAME <- gsub(",", ";", acs_noncitizen_hamilton$NAME)
+
+acs_noncitizen_hamilton <- acs_noncitizen_hamilton %>% select(NAME,noncitizens)
+
+#left join 
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_citizen_hamilton, by = "NAME")
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_noncitizen_hamilton, by = "NAME")
+
+#mutate %citizen and %noncitizen
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_citizen = (citizens/total_population)*100) %>% 
+  mutate(percent_noncitizen = (noncitizens/total_population)*100)
+
+#load education data
+hamilton_edu <- read_csv("data/education_level.csv")
+#hamilton_edu_meta <- read_csv("data/Hamilton-Education-Column-Metadata.csv")
+
+#select Highschool education data
+hamilton_edu <- hamilton_edu %>% 
+  select("NAME", "S1501_C02_002E", "S1501_C01_001E", "S1501_C01_007E", "S1501_C01_008E", "S1501_C01_006E")
+
+hamilton_edu <- hamilton_edu[-1, ] 
+
+#rename education columns
+names(hamilton_edu) <- c(
+    "NAME", #NAME,
+    "18NOhighschool", #"S1501_C01_002E",
+    "18total", #"S1501_C01_001E"
+    "25NO9th",#"S1501_C01_007E", 
+    "25NOhighschool", #"S1501_C01_008E"
+    "25total" #S1501_C01_006E
+    
+    )
+
+#mutate columns from character to numeric
+hamilton_edu <- hamilton_edu %>% 
+  mutate(`18NOhighschool` = as.numeric(`18NOhighschool`)) %>% 
+  mutate(`18total` = as.numeric(`18total`)) %>% 
+  mutate(`25NO9th` = as.numeric(`25NO9th`)) %>% 
+  mutate(`25NOhighschool` = as.numeric(`25NOhighschool`)) %>% 
+  mutate(`25total` = as.numeric(`25total`)) 
+
+#mutate columns for 18 and 25 than HAVE GRADUATED HIGHSCHOOL
+hamilton_edu <- hamilton_edu %>% 
+  mutate(`18highschool` = `18total` - `18NOhighschool`) %>% 
+  mutate(`25highschool` = `25total` - `25NOhighschool` - `25NO9th`)
+
+#mutate column for total pop and total highschool graduation pop
+
+hamilton_edu <- hamilton_edu %>% 
+  mutate(total_pop = `18total` + `25total`) %>% 
+  mutate(total_highschool_pop = `25highschool` + `18highschool`)
+
+hamilton_edu <- hamilton_edu %>% 
+  mutate(total_percent_highschool = (total_highschool_pop/total_pop)*100) 
+
+hamilton_edu <- hamilton_edu %>% 
+  select("NAME", "total_percent_highschool")
+#left_join highschool education to hamilton_tract
+hamilton_tract <- hamilton_tract %>% 
+  left_join(hamilton_edu, by = "NAME")
+
+
+
 
