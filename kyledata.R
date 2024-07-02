@@ -220,3 +220,100 @@ acstotalpophamilton <- acstotalpophamilton %>% select(NAME,population)
 
 hamilton_tract <- hamilton_tract %>% 
   left_join(acstotalpophamilton, by = "NAME")
+
+####
+
+acs_hl_hamilton <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_hispanic_or_latino_hamilton.csv") #reads csv for hispanic or latino individuals in hamilton county
+acs_hl_hamilton <- acs_hl_hamilton %>% select(-contains("Margin of Error"))#removes margin of error column
+acs_hispanic_hamilton <- acs_hl_hamilton[3, ] #keeps row of hispanic individuals as own dataset
+acs_nonhispanic_hamilton <- acs_hl_hamilton[2, ]#makes new dataset of nonhispanic individuals
+
+acs_hispanic_hamilton <- acs_hispanic_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "hispaniclat") #pivots longer so it flips it around so census tracts are rows and not columns
+
+acs_nonhispanic_hamilton <- acs_nonhispanic_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "nonhispaniclat") 
+
+acs_hispanic_hamilton <- acs_hispanic_hamilton %>% select(NAME,hispaniclat) #removes the column that labels which row is which
+acs_nonhispanic_hamilton <- acs_nonhispanic_hamilton %>% select(NAME,nonhispaniclat)
+acs_hispanic_hamilton$NAME <-  gsub("!.*", "", acs_hispanic_hamilton$NAME)#makes entries in the census tract column for hispanic individuals a little cleaner
+acs_hispanic_hamilton$NAME <- gsub(",", ";", acs_hispanic_hamilton$NAME)
+
+acs_nonhispanic_hamilton$NAME <-  gsub("!.*", "", acs_nonhispanic_hamilton$NAME)
+acs_nonhispanic_hamilton$NAME <- gsub(",", ";", acs_nonhispanic_hamilton$NAME)
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_hispanic_hamilton, by = "NAME")#joins hispanic individuals dataset to the main dataset
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_nonhispanic_hamilton, by = "NAME")#joins nonhispanic individuals to the main dataset
+
+#####
+
+acs_race_hamilton <- acs_race_hamilton <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_detailedrace_hamilton.csv")#reads race info csv
+
+#This line removes margin of error column
+acs_race_hamilton <- acs_race_hamilton %>% 
+  select(-contains("Margin of Error"))
+
+
+#These lines make new datasets of just the row for individuals based on race in hamilton county
+acs_white_hamilton <- acs_race_hamilton[3, ]
+acs_black_hamilton <- acs_race_hamilton[4, ]
+acs_nativeamerican_hamilton <- acs_race_hamilton[5, ]
+acs_asian_hamilton <- acs_race_hamilton[6, ]
+acs_hawaiian_hamilton <- acs_race_hamilton[7, ]
+acs_otherrace_hamilton <- acs_race_hamilton[8, ]
+
+
+#These lines pivot longer to flip the datasets around to where census tracts are 1 column and the rows are which census tract in particular and there is a column for individuals of race
+acs_white_hamilton <- acs_white_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "white") 
+acs_black_hamilton <- acs_black_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "black") 
+acs_nativeamerican_hamilton <- acs_nativeamerican_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "nativeamerican") 
+acs_asian_hamilton <- acs_asian_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "asian") 
+acs_hawaiian_hamilton <- acs_hawaiian_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "hawaiianorislander") 
+acs_otherrace_hamilton <- acs_otherrace_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "otherrace") 
+
+
+#these lines make the census tract column entries a little cleaner
+acs_white_hamilton$NAME <-  gsub("!.*", "", acs_white_hamilton$NAME)
+acs_white_hamilton$NAME <- gsub(",", ";", acs_white_hamilton$NAME)
+acs_black_hamilton$NAME <-  gsub("!.*", "", acs_black_hamilton$NAME)
+acs_black_hamilton$NAME <- gsub(",", ";", acs_black_hamilton$NAME)
+acs_nativeamerican_hamilton$NAME <-  gsub("!.*", "", acs_nativeamerican_hamilton$NAME)
+acs_nativeamerican_hamilton$NAME <- gsub(",", ";", acs_nativeamerican_hamilton$NAME)
+acs_asian_hamilton$NAME <-  gsub("!.*", "", acs_asian_hamilton$NAME)
+acs_asian_hamilton$NAME <- gsub(",", ";", acs_asian_hamilton$NAME)
+acs_hawaiian_hamilton$NAME <-  gsub("!.*", "", acs_hawaiian_hamilton$NAME)
+acs_hawaiian_hamilton$NAME <- gsub(",", ";", acs_hawaiian_hamilton$NAME)
+acs_otherrace_hamilton$NAME <-  gsub("!.*", "", acs_otherrace_hamilton$NAME)
+acs_otherrace_hamilton$NAME <- gsub(",", ";", acs_otherrace_hamilton$NAME)
+
+
+#the next lines drop the label column because it is unnecessary and we need to get rid of it for merging
+acs_white_hamilton <- acs_white_hamilton %>% select(NAME,white)
+acs_black_hamilton <- acs_black_hamilton %>% select(NAME,black)
+acs_nativeamerican_hamilton <- acs_nativeamerican_hamilton %>% select(NAME,nativeamerican)
+acs_asian_hamilton <- acs_asian_hamilton %>% select(NAME,asian)
+acs_hawaiian_hamilton <- acs_hawaiian_hamilton %>% select(NAME,hawaiianorislander)
+acs_otherrace_hamilton <- acs_otherrace_hamilton %>% select(NAME,otherrace)
+
+
+#next lines merge the datasets into the hamilton tract main set
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_white_hamilton, by = "NAME")
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_black_hamilton, by = "NAME")
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_nativeamerican_hamilton, by = "NAME")
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_asian_hamilton, by = "NAME")
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_hawaiian_hamilton, by = "NAME")
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_otherrace_hamilton, by = "NAME")
