@@ -366,3 +366,28 @@ acs_gross_rent <- acs_gross_rent %>% select(NAME,mediangrossrent)
 #joins gross rent data to hamilton_tract dataset
 hamilton_tract <- hamilton_tract %>% 
   left_join(acs_gross_rent, by = "NAME")
+
+tm_shape(hamilton_tract)+tm_polygons(col="mediangrossrent")
+
+#create income level groups
+hamilton_tract<- hamilton_tract %>% 
+  mutate(mediangrossrent = ifelse(mediangrossrent == '-', NA, avg_income)) %>% 
+  mutate(mediangrossrent = as.numeric(mediangrossrent)) %>% 
+  mutate(mediangrossrent_group = case_when(
+    mediangrossrent < 29999 ~ "<30k",
+    mediangrossrent >= 30000 & mediangrossrent < 49999 ~ "30k-50k",
+    mediangrossrent >= 50000 & mediangrossrent < 69999 ~ "50k-70k",
+    mediangrossrent >= 70000 & mediangrossrent < 89999 ~ "70k-90k",
+    mediangrossrent >= 90000 & mediangrossrent < 109999 ~ "90k-110k",
+    mediangrossrent >= 110000 & mediangrossrent < 129999 ~ "110k-130k",
+    mediangrossrent >= 130000 & mediangrossrent < 149999 ~ "130k-150k",
+    mediangrossrent >= 150000 & mediangrossrent < 169999 ~ "150k-170k",
+    mediangrossrent >= 170000 & mediangrossrent < 189999 ~ "170k-190k",
+    mediangrossrent > 190000 ~ ">190k",
+    TRUE~NA
+  ) ) %>% 
+  mutate(mediangrossrent_group=fct_reorder(factor(mediangrossrent_group), mediangrossrent, .na_rm = TRUE))#factor reorder for viewing ease
+
+#create chloropleth for income
+tm_shape(hamilton_tract)+
+  tm_polygons( col = "mediangrossrent_group", id="NAME", palette = "Blues")
