@@ -145,10 +145,7 @@ hamilton_tract <- hamilton_tract %>%
 
 
 #create average income for each census tract
-
-
 #Get ACS Income Data for Income
-
 #Just Hamilton County
 ACS_income_hamilton <- read_csv("data/ACS5_hamilton_income.csv")
 ACS_income_hamilton <- ACS_income_hamilton %>% 
@@ -284,6 +281,10 @@ hamilton_edu <- hamilton_edu %>%
 #left_join highschool education to hamilton_tract
 hamilton_tract <- hamilton_tract %>% 
   left_join(hamilton_edu, by = "NAME")
+
+#heat map for education
+tm_shape(hamilton_tract)+
+  tm_polygons(col = "total_percent_highschool")
 
 
 
