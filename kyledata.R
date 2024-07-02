@@ -220,3 +220,100 @@ acstotalpophamilton <- acstotalpophamilton %>% select(NAME,population)
 
 hamilton_tract <- hamilton_tract %>% 
   left_join(acstotalpophamilton, by = "NAME")
+
+####
+
+acs_hl_hamilton <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_hispanic_or_latino_hamilton.csv")
+acs_hl_hamilton <- acs_hl_hamilton %>% select(-contains("Margin of Error"))
+acs_hispanic_hamilton <- acs_hl_hamilton[3, ]
+acs_nonhispanic_hamilton <- acs_hl_hamilton[2, ]
+
+acs_hispanic_hamilton <- acs_hispanic_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "hispaniclat") 
+
+acs_nonhispanic_hamilton <- acs_nonhispanic_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "nonhispaniclat") 
+
+acs_hispanic_hamilton <- acs_hispanic_hamilton %>% select(NAME,hispaniclat)
+acs_nonhispanic_hamilton <- acs_nonhispanic_hamilton %>% select(NAME,nonhispaniclat)
+acs_hispanic_hamilton$NAME <-  gsub("!.*", "", acs_hispanic_hamilton$NAME)
+acs_hispanic_hamilton$NAME <- gsub(",", ";", acs_hispanic_hamilton$NAME)
+
+acs_nonhispanic_hamilton$NAME <-  gsub("!.*", "", acs_nonhispanic_hamilton$NAME)
+acs_nonhispanic_hamilton$NAME <- gsub(",", ";", acs_nonhispanic_hamilton$NAME)
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_hispanic_hamilton, by = "NAME")
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_nonhispanic_hamilton, by = "NAME")
+
+#####
+
+acs_race_hamilton <- acs_race_hamilton <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_detailedrace_hamilton.csv")
+
+acs_race_hamilton <- acs_race_hamilton %>% 
+  select(-contains("Margin of Error"))
+
+
+acs_white_hamilton <- acs_race_hamilton[3, ]
+acs_black_hamilton <- acs_race_hamilton[4, ]
+acs_nativeamerican_hamilton <- acs_race_hamilton[5, ]
+acs_asian_hamilton <- acs_race_hamilton[6, ]
+acs_hawaiian_hamilton <- acs_race_hamilton[7, ]
+acs_otherrace_hamilton <- acs_race_hamilton[8, ]
+
+acs_white_hamilton <- acs_white_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "white") 
+acs_black_hamilton <- acs_black_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "black") 
+acs_nativeamerican_hamilton <- acs_nativeamerican_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "nativeamerican") 
+acs_asian_hamilton <- acs_asian_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "asian") 
+acs_hawaiian_hamilton <- acs_hawaiian_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "hawaiianorislander") 
+acs_otherrace_hamilton <- acs_otherrace_hamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "otherrace") 
+
+acs_white_hamilton$NAME <-  gsub("!.*", "", acs_white_hamilton$NAME)
+acs_white_hamilton$NAME <- gsub(",", ";", acs_white_hamilton$NAME)
+
+acs_black_hamilton$NAME <-  gsub("!.*", "", acs_black_hamilton$NAME)
+acs_black_hamilton$NAME <- gsub(",", ";", acs_black_hamilton$NAME)
+
+acs_nativeamerican_hamilton$NAME <-  gsub("!.*", "", acs_nativeamerican_hamilton$NAME)
+acs_nativeamerican_hamilton$NAME <- gsub(",", ";", acs_nativeamerican_hamilton$NAME)
+
+acs_asian_hamilton$NAME <-  gsub("!.*", "", acs_asian_hamilton$NAME)
+acs_asian_hamilton$NAME <- gsub(",", ";", acs_asian_hamilton$NAME)
+
+acs_hawaiian_hamilton$NAME <-  gsub("!.*", "", acs_hawaiian_hamilton$NAME)
+acs_hawaiian_hamilton$NAME <- gsub(",", ";", acs_hawaiian_hamilton$NAME)
+
+acs_otherrace_hamilton$NAME <-  gsub("!.*", "", acs_otherrace_hamilton$NAME)
+acs_otherrace_hamilton$NAME <- gsub(",", ";", acs_otherrace_hamilton$NAME)
+
+acs_white_hamilton <- acs_white_hamilton %>% select(NAME,white)
+acs_black_hamilton <- acs_black_hamilton %>% select(NAME,black)
+acs_nativeamerican_hamilton <- acs_nativeamerican_hamilton %>% select(NAME,nativeamerican)
+acs_asian_hamilton <- acs_asian_hamilton %>% select(NAME,asian)
+acs_hawaiian_hamilton <- acs_hawaiian_hamilton %>% select(NAME,hawaiianorislander)
+acs_otherrace_hamilton <- acs_otherrace_hamilton %>% select(NAME,otherrace)
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_white_hamilton, by = "NAME")
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_black_hamilton, by = "NAME")
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_nativeamerican_hamilton, by = "NAME")
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_asian_hamilton, by = "NAME")
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_hawaiian_hamilton, by = "NAME")
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_otherrace_hamilton, by = "NAME")
