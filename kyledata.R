@@ -60,7 +60,7 @@ total_info <- total_info %>%
 #save new data for coordinates
 # save(total_lender_info, file="total_lender_info.RData")
 
-load("total_lender_info.RData") 
+load("D:/kyle_datalab/betterfi-2024/data/total_lender_info.RData") 
 
 
 #load geography information
@@ -124,6 +124,21 @@ hamilton_tract <- left_join( hamilton_tract, lenders_per_tract %>% rename( NAME 
 tm_shape( hamilton_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 
 #create average income for each census tract
+
+acstotalpophamilton <- read_csv("D:/kyle_datalab/betterfi-2024/data/acshamiltonpop.csv")
+acstotalpophamilton <- acstotalpophamilton %>% 
+  select(-contains("Margin of Error"))
+
+acstotalpophamilton <- acstotalpophamilton %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "total_population") 
+
+acstotalpophamilton$NAME <-  gsub("!.*", "", acstotalpophamilton$NAME)
+acstotalpophamilton$NAME <- gsub(",", ";", acstotalpophamilton$NAME)
+
+acstotalpophamilton <- acstotalpophamilton %>% select(NAME,total_population)
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acstotalpophamilton, by = "NAME")
 
 
 #Get ACS Income Data for Income
@@ -204,22 +219,10 @@ acs_noncitizen_hamilton <- acs_noncitizen_hamilton %>% select(NAME,noncitizens)
 hamilton_tract <- hamilton_tract %>% 
   left_join(acs_noncitizen_hamilton, by = "NAME")
 
+
+
+
 #####
-
-acstotalpophamilton <- read_csv("D:/kyle_datalab/betterfi-2024/data/acshamiltonpop.csv")
-acstotalpophamilton <- acstotalpophamilton %>% 
-  select(-contains("Margin of Error"))
-
-acstotalpophamilton <- acstotalpophamilton %>% 
-  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "population") 
-
-acstotalpophamilton$NAME <-  gsub("!.*", "", acstotalpophamilton$NAME)
-acstotalpophamilton$NAME <- gsub(",", ";", acstotalpophamilton$NAME)
-
-acstotalpophamilton <- acstotalpophamilton %>% select(NAME,population)
-
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acstotalpophamilton, by = "NAME")
 
 ####
 
@@ -246,6 +249,9 @@ hamilton_tract <- hamilton_tract %>%
   left_join(acs_hispanic_hamilton, by = "NAME")#joins hispanic individuals dataset to the main dataset
 hamilton_tract <- hamilton_tract %>% 
   left_join(acs_nonhispanic_hamilton, by = "NAME")#joins nonhispanic individuals to the main dataset
+
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_hispaniclat = (hispaniclat/total_population)*100)
 
 #####
 
@@ -317,3 +323,71 @@ hamilton_tract <- hamilton_tract %>%
   left_join(acs_hawaiian_hamilton, by = "NAME")
 hamilton_tract <- hamilton_tract %>% 
   left_join(acs_otherrace_hamilton, by = "NAME")
+
+#creates new race into percentages
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_white = (white/total_population)*100)
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_black = (black/total_population)*100)
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_nativeamerican = (nativeamerican/total_population)*100)
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_hawaiianorislander = (hawaiianorislander/total_population)*100)
+hamilton_tract <- hamilton_tract %>% 
+  mutate(percent_otherrace = (otherrace/total_population)*100)
+
+
+#####
+
+#loads median gross rent
+acs_gross_rent <- read_csv("D:/kyle_datalab/betterfi-2024/data/acs_gross_rent.csv")
+
+#clears margins of error columns
+acs_gross_rent <- acs_gross_rent %>% 
+  select(-contains("Margin of Error"))
+
+#converts columns to as character in order to pivot longer
+acs_gross_rent <- acs_gross_rent %>%
+  mutate(across(starts_with("Census Tract"), as.character))
+
+#pivots longer flipping data so census tracts are 1 column instead of however many
+acs_gross_rent <- acs_gross_rent %>% 
+  pivot_longer(cols = starts_with("Census Tract"), 
+               names_to = "NAME", 
+               values_to = "mediangrossrent")
+
+#cleans census tract column a little
+acs_gross_rent$NAME <-  gsub("!.*", "", acs_gross_rent$NAME)
+acs_gross_rent$NAME <- gsub(",", ";", acs_gross_rent$NAME)
+
+#removes label column, only keeping rent and census tract name
+acs_gross_rent <- acs_gross_rent %>% select(NAME,mediangrossrent)
+
+#joins gross rent data to hamilton_tract dataset
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_gross_rent, by = "NAME")
+
+tm_shape(hamilton_tract)+tm_polygons(col="mediangrossrent")
+
+#create income level groups
+hamilton_tract<- hamilton_tract %>% 
+  mutate(mediangrossrent = ifelse(mediangrossrent == '-', NA, avg_income)) %>% 
+  mutate(mediangrossrent = as.numeric(mediangrossrent)) %>% 
+  mutate(mediangrossrent_group = case_when(
+    mediangrossrent < 29999 ~ "<30k",
+    mediangrossrent >= 30000 & mediangrossrent < 49999 ~ "30k-50k",
+    mediangrossrent >= 50000 & mediangrossrent < 69999 ~ "50k-70k",
+    mediangrossrent >= 70000 & mediangrossrent < 89999 ~ "70k-90k",
+    mediangrossrent >= 90000 & mediangrossrent < 109999 ~ "90k-110k",
+    mediangrossrent >= 110000 & mediangrossrent < 129999 ~ "110k-130k",
+    mediangrossrent >= 130000 & mediangrossrent < 149999 ~ "130k-150k",
+    mediangrossrent >= 150000 & mediangrossrent < 169999 ~ "150k-170k",
+    mediangrossrent >= 170000 & mediangrossrent < 189999 ~ "170k-190k",
+    mediangrossrent > 190000 ~ ">190k",
+    TRUE~NA
+  ) ) %>% 
+  mutate(mediangrossrent_group=fct_reorder(factor(mediangrossrent_group), mediangrossrent, .na_rm = TRUE))#factor reorder for viewing ease
+
+#create chloropleth for income
+tm_shape(hamilton_tract)+
+  tm_polygons( col = "mediangrossrent_group", id="NAME", palette = "Blues")
