@@ -559,15 +559,26 @@ hamilton_tract <- hamilton_tract %>%
 
 
 
+#-------------------------------MISC CODE---------------------------------------
+
+
 #write RData for hamilton tract (main working dataframe)
 save(hamilton_tract, file="hamilton_data.RData")
 
 
 #add Company Name to Hamilton Lenders Dataframe
-# total_info_join <- total_info %>% 
-#   rename(address = full_address) %>% 
-#   select("Company Name", "address")
-# 
-# hamilton_county_lenders <- hamilton_county_lenders %>% 
-#   semi_join(total_info, by = "address")
-  
+total_info_join <- total_info %>%
+  rename(address = full_address) %>%
+  select("Company Name", "address")
+
+hamilton_county_lenders <- hamilton_county_lenders %>%
+  left_join(total_info_join, by = "address")
+
+#total tn geography info
+tn_geo <- get_acs(geography = "tract",
+                  state = "TN",
+                  variables = "B01003_001",
+                  year = 2022,
+                  geometry = TRUE)
+
+#-------------------------------------------------------------------------------
