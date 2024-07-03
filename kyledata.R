@@ -140,11 +140,10 @@ acstotalpophamilton <- acstotalpophamilton %>% select(NAME,total_population)
 hamilton_tract <- hamilton_tract %>% 
   left_join(acstotalpophamilton, by = "NAME")
 
-
 #Get ACS Income Data for Income
 
 #Just Hamilton County
-ACS_income_hamilton <- read_csv("ACS5_hamilton_income.csv")
+ACS_income_hamilton <- read_csv("D:/kyle_datalab/betterfi-2024/data/ACS5_hamilton_income.csv")
 ACS_income_hamilton <- ACS_income_hamilton %>% 
   select(-contains("Margin of Error")) %>% 
   select(contains("Household")) %>% 
@@ -223,6 +222,69 @@ hamilton_tract <- hamilton_tract %>%
 
 
 #####
+
+#load education data
+
+Sys.setenv("VROOM_CONNECTION_SIZE" = 5000000)
+edutest <- read_csv("C:/Users/kylej/Downloads/acs_edu_tn.csv")
+
+hamilton_edu <- read_csv("D:/kyle_datalab/betterfi-2024/data/hamilton/education_level.csv")
+#hamilton_edu_meta <- read_csv("data/Hamilton-Education-Column-Metadata.csv")
+
+#select Highschool education data
+hamilton_edu <- hamilton_edu %>% 
+  select("NAME", "S1501_C02_002E", "S1501_C01_001E", "S1501_C01_007E", "S1501_C01_008E", "S1501_C01_006E")
+
+#remove first row
+hamilton_edu <- hamilton_edu[-1, ] 
+
+#rename education columns
+names(hamilton_edu) <- c(
+  "NAME", #NAME,
+  "18NOhighschool", #"S1501_C01_002E",
+  "18total", #"S1501_C01_001E"
+  "25NO9th",#"S1501_C01_007E", 
+  "25NOhighschool", #"S1501_C01_008E"
+  "25total" #S1501_C01_006E
+  
+)
+
+#mutate columns from character to numeric
+hamilton_edu <- hamilton_edu %>% 
+  mutate(`18NOhighschool` = as.numeric(`18NOhighschool`)) %>% 
+  mutate(`18total` = as.numeric(`18total`)) %>% 
+  mutate(`25NO9th` = as.numeric(`25NO9th`)) %>% 
+  mutate(`25NOhighschool` = as.numeric(`25NOhighschool`)) %>% 
+  mutate(`25total` = as.numeric(`25total`)) 
+
+
+#mutate columns for 18 and 25 than HAVE GRADUATED HIGHSCHOOL
+hamilton_edu <- hamilton_edu %>% 
+  mutate(`18highschool` = `18total` - `18NOhighschool`) %>% 
+  mutate(`25highschool` = `25total` - `25NOhighschool` - `25NO9th`)
+
+
+#mutate column for total pop and total highschool graduation pop
+hamilton_edu <- hamilton_edu %>% 
+  mutate(total_pop = `18total` + `25total`) %>% 
+  mutate(total_highschool_pop = `25highschool` + `18highschool`)
+
+hamilton_edu <- hamilton_edu %>% 
+  mutate(total_percent_highschool = (total_highschool_pop/total_pop)*100) 
+
+hamilton_edu <- hamilton_edu %>% 
+  select("NAME", "total_percent_highschool")
+
+
+#left_join highschool education to hamilton_tract
+hamilton_tract <- hamilton_tract %>% 
+  left_join(hamilton_edu, by = "NAME")
+
+
+#heat map for education
+tm_shape(hamilton_tract)+
+  tm_polygons(col = "total_percent_highschool")
+
 
 ####
 
@@ -356,6 +418,9 @@ acs_gross_rent <- acs_gross_rent %>%
                names_to = "NAME", 
                values_to = "mediangrossrent")
 
+acs_gross_rent <- acs_gross_rent %>%
+  mutate(across(starts_with("Census Tract"), as.character))
+
 #cleans census tract column a little
 acs_gross_rent$NAME <-  gsub("!.*", "", acs_gross_rent$NAME)
 acs_gross_rent$NAME <- gsub(",", ";", acs_gross_rent$NAME)
@@ -367,27 +432,84 @@ acs_gross_rent <- acs_gross_rent %>% select(NAME,mediangrossrent)
 hamilton_tract <- hamilton_tract %>% 
   left_join(acs_gross_rent, by = "NAME")
 
-tm_shape(hamilton_tract)+tm_polygons(col="mediangrossrent")
+#creates mediangrossrent column on hamilton tract for the groups
+hamilton_tract <- hamilton_tract %>%
+  mutate(
+    mediangrossrent = ifelse(mediangrossrent == '-' | is.na(mediangrossrent), NA, mediangrossrent)
+  )
 
-#create income level groups
-hamilton_tract<- hamilton_tract %>% 
-  mutate(mediangrossrent = ifelse(mediangrossrent == '-', NA, avg_income)) %>% 
-  mutate(mediangrossrent = as.numeric(mediangrossrent)) %>% 
+#converts the mediangrossrent column to numeric
+hamilton_tract <- hamilton_tract %>%
+  mutate(mediangrossrent = as.numeric(mediangrossrent))
+
+#groups mediangrossrent by how much each tract pays for rent
+hamilton_tract <- hamilton_tract %>%
   mutate(mediangrossrent_group = case_when(
-    mediangrossrent < 29999 ~ "<30k",
-    mediangrossrent >= 30000 & mediangrossrent < 49999 ~ "30k-50k",
-    mediangrossrent >= 50000 & mediangrossrent < 69999 ~ "50k-70k",
-    mediangrossrent >= 70000 & mediangrossrent < 89999 ~ "70k-90k",
-    mediangrossrent >= 90000 & mediangrossrent < 109999 ~ "90k-110k",
-    mediangrossrent >= 110000 & mediangrossrent < 129999 ~ "110k-130k",
-    mediangrossrent >= 130000 & mediangrossrent < 149999 ~ "130k-150k",
-    mediangrossrent >= 150000 & mediangrossrent < 169999 ~ "150k-170k",
-    mediangrossrent >= 170000 & mediangrossrent < 189999 ~ "170k-190k",
-    mediangrossrent > 190000 ~ ">190k",
-    TRUE~NA
-  ) ) %>% 
-  mutate(mediangrossrent_group=fct_reorder(factor(mediangrossrent_group), mediangrossrent, .na_rm = TRUE))#factor reorder for viewing ease
+    mediangrossrent < 250 ~ "<250",
+    mediangrossrent >= 250 & mediangrossrent < 500 ~ "250-500",
+    mediangrossrent >= 500 & mediangrossrent < 750 ~ "500-750",
+    mediangrossrent >= 750 & mediangrossrent < 1000 ~ "750-1000",
+    mediangrossrent >= 1000 & mediangrossrent < 1250 ~ "1000-1250",
+    mediangrossrent >= 1250 & mediangrossrent < 1500 ~ "1250-1500",
+    mediangrossrent >= 1500 & mediangrossrent < 1750 ~ "1500-1750",
+    mediangrossrent >= 1750 & mediangrossrent < 2000 ~ "1750-2000",
+    mediangrossrent >= 2000 & mediangrossrent < 2250 ~ "2000-2250",
+    mediangrossrent >= 2250 & mediangrossrent < 2500 ~ "2250-2500",
+    mediangrossrent >= 2500 ~ "2500+",
+    TRUE ~ NA_character_
+  ))
 
-#create chloropleth for income
-tm_shape(hamilton_tract)+
-  tm_polygons( col = "mediangrossrent_group", id="NAME", palette = "Blues")
+#factor reorders by levels of rent, the exact scale i just made previously
+hamilton_tract <- hamilton_tract %>%
+  mutate(mediangrossrent_group = factor(
+    mediangrossrent_group,
+    levels = c("<250", "250-500", "500-750", "750-1000", "1000-1250", 
+               "1250-1500", "1500-1750", "1750-2000", "2000-2250", "2250-2500", "2500+")
+  ))
+
+#creates the map based on how much each tract pays for median gross rent
+tm_shape(hamilton_tract) +
+  tm_polygons(
+    col = "mediangrossrent_group",
+    id = "NAME",
+    palette = "Blues",
+    title = "Median Gross Rent"
+  ) +
+  tm_layout(
+    legend.title.size = 1,
+    legend.text.size = 0.8,
+    legend.position = c("left", "bottom")
+  ) +
+  tm_borders(alpha = 0.5)
+
+########
+
+#reads csv for marital status census info
+acs_marital_ham <- read_csv("D:/kyle_datalab/betterfi-2024/data/hamilton/acs_marital.csv")
+
+#removes columns with margins of error
+acs_marital_ham <- acs_marital_ham %>% 
+  select(-contains("Margin of Error"))
+
+#keeps population total row
+acs_marital_ham1 <- acs_marital_ham[1, ]
+
+#filters out columns with Tennessee total estimate based on name variable
+acs_marital_ham1 <- acs_marital_ham1 %>% filter(!grepl("Tennessee!!Total!!Estimate",NAME))
+
+#creates censustract column and varname column used for pivoting wider
+acs_marital_ham1 <- acs_marital_ham1 %>%
+  mutate(censustract=(gsub("!!.*","",NAME)),
+         varname=(gsub(".*Tennessee!!","",NAME)),
+         varname=(gsub("!!Estimate.*", "", varname)))
+
+#pivots wider with varname and value column
+acs_marital_ham2 <- acs_marital_ham1 %>% select(-`Label (Grouping)`,-NAME) %>% 
+  pivot_wider(names_from=varname,values_from=value)
+
+#merges marital dataset with hamilton tract by name and censustract variables.
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_marital_ham2, by = c("NAME" = "censustract"))
+
+
+
