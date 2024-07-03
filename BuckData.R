@@ -559,7 +559,7 @@ hamilton_tract <- hamilton_tract %>%
 
 
 
-#-------------------------------MISC CODE---------------------------------------
+#--------------------------------MISC.CODE-------------------------------------#
 
 
 #write RData for hamilton tract (main working dataframe)
@@ -572,7 +572,9 @@ total_info_join <- total_info %>%
   select("Company Name", "address")
 
 hamilton_county_lenders <- hamilton_county_lenders %>%
-  left_join(total_info_join, by = "address")
+  left_join(total_info_join, by = "address") 
+hamilton_county_lenders <- hamilton_county_lenders %>%
+  rename(company_name = `Company Name`)
 
 #total tn geography info
 tn_geo <- get_acs(geography = "tract",
@@ -581,4 +583,5 @@ tn_geo <- get_acs(geography = "tract",
                   year = 2022,
                   geometry = TRUE)
 
-#-------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------#
