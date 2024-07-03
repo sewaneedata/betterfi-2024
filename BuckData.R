@@ -558,3 +558,16 @@ hamilton_tract <- hamilton_tract %>%
 ####
 
 
+
+#write RData for hamilton tract (main working dataframe)
+save(hamilton_tract, file="hamilton_data.RData")
+
+
+#add Company Name to Hamilton Lenders Dataframe
+# total_info_join <- total_info %>% 
+#   rename(address = full_address) %>% 
+#   select("Company Name", "address")
+# 
+# hamilton_county_lenders <- hamilton_county_lenders %>% 
+#   semi_join(total_info, by = "address")
+  
