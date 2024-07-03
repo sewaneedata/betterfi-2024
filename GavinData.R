@@ -176,7 +176,17 @@ tm_shape(hamilton_tract)+
 
 
 #load Education Data
-hamilton_education <- read_csv("data/education_level.csv")
+hamilton_education <- read_csv("education_level.csv")
 
 total_lender_na <- total_lender_info %>%
   filter(status != "REQUEST_DENIED")
+
+
+#Buck's Code!
+#add Company Name to Hamilton Lenders Dataframe
+total_info_join <- total_info %>%
+  rename(address = full_address) %>%
+  select("Company Name", "address")
+
+hamilton_county_lenders <- hamilton_county_lenders %>%
+  left_join(total_info_join, by = "address")
