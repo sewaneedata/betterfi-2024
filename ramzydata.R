@@ -60,7 +60,7 @@ total_info <- total_info %>%
 #save new data for coordinates
 # save(total_lender_info, file="total_lender_info.RData")
 
-load("total_lender_info.RData") 
+load('data/total_lender_info.RData') 
 
 
 #load geography information
@@ -175,10 +175,56 @@ tm_shape(hamilton_tract)+
 
 
 
+##looking at just in Hamilton county
 employment <- read_csv('data/employment.csv')
 employment_cleaning <- employment %>% 
   select(-contains("Margin of Error"))
- 
+#selecting row 5 which is number of employed 
+employment_cleaning1 <- employment_cleaning[5:6,] %>%  
+  # keeping percentages 
+  select('Label (Grouping)', contains("Percent")) %>% 
+  rename(x = `Tennessee!!Percent`)
+# create two columns of unemployed and employed percentages based off census tracks.
+employment_cleaning1 <- employment_cleaning1 %>% 
+  # making each census track a row while getting the percentages for employment and unemployment
+  pivot_longer(cols =  starts_with("Census Tract") & ends_with('Tennessee!!Percent'),
+               names_to = 'metric',
+               values_to = 'value')  %>% 
+  #created new columns of unemployed and employed by using labeling group 
+  pivot_wider(id_cols = metric,
+              names_from = `Label (Grouping)`,
+              values_from = value)
+
+#changing the names of the columns 
+ACS_employment_hamilton<- employment_cleaning1 %>% 
+  rename( NAME = metric)
+#remove the !!Percent from the NAME column
+ACS_employment_hamilton$NAME <- gsub( "!!Percent", "", ACS_employment_hamilton$NAME)
+ACS_employment_hamilton$NAME <- gsub(",", ";", ACS_employment_hamilton$NAME)
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(ACS_employment_hamilton, by = "NAME")
+
+hamilton_tract$percent_employed <- gsub(",", "", hamilton_tract$percent_employed )
+
+
+##employment_cleaning1$employed<-sub('%', '', employment_cleaning1$employed)
+
+
+  
+#Creating new dataset that has unemployment percentages
+employment_cleaning2 <- employment_cleaning[6,] 
+employment_cleaning2<- employment_cleaning2 %>%
+  select(contains("Percent")) %>% 
+  rename(x = `Tennessee!!Percent`) %>% 
+  pivot_longer(cols = starts_with("Census Tract") & ends_with('Tennessee!!Percent'), names_to = "NAME", values_to = "Percentage Unemployed") %>%
+    select(-"x")
+
+
+#pivotting the data and putting the percents into a column.
+employment_cleaning1<- employment_cleaning1 %>% 
+  pivot_longer(cols =  starts_with("Census Tract") & ends_with('Tennessee!!Percent'), names_to = "NAME", values_to = "Percentage Employed") %>% 
+  select(-"x")
 
 
 
