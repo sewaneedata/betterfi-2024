@@ -19,9 +19,7 @@ library(mapsapi)
 load("data/hamilton_data.RData")
 
 #create meta datafram for hemilton_tract (variable explanation)
-hamilton_metadata <- data.frame(
-  id = 
-)
+
 #list of variables:
 #n_lenders - The number of lenders per census tract
 #avg_income - The average income per census tract
@@ -78,12 +76,21 @@ varlist_highschool <- hamilton_tract %>%
 #percent veteran
 varlist_veteran <- hamilton_tract %>% 
   select("NAME", "percent_veteran") %>% 
-  mutate(percent_veteran = as.numeric(gsub("%", "", varlist_veteran$percent_veteran))) %>% 
+  mutate(percent_veteran = as.numeric(gsub("%", "", percent_veteran))) %>% 
   replace_na(list(percent_veteran = 0)) %>%
   mutate(percent_veteran = as.numeric(percent_veteran)) %>% 
   mutate(max_percent_veteran = max(percent_veteran)) %>% 
   mutate(vun_veteran = percent_veteran/max_percent_veteran) %>% 
-  arrange(desc(vun_veteran))
+  arrange(desc(vun_veteran)) %>% 
+  filter(vun_veteran != 0)
 
+#median gross rent 
+varlist_mediangrossrent <- hamilton_tract %>% 
+  select("NAME", "mediangrossrent") %>% 
+  mutate(mediangrossrent = as.numeric(mediangrossrent)) %>% 
+  drop_na(mediangrossrent) %>% 
+  
+  
+  
 
 #-------------------------------------------------------------------------------#

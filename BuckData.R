@@ -381,16 +381,13 @@ hamilton_tract <- hamilton_tract %>%
 #loads median gross rent
 acs_gross_rent <- read_csv("data/acs_gross_rent.csv")
 
-
 #clears margins of error columns
 acs_gross_rent <- acs_gross_rent %>% 
   select(-contains("Margin of Error"))
 
-
 #converts columns to as character in order to pivot longer
 acs_gross_rent <- acs_gross_rent %>%
   mutate(across(starts_with("Census Tract"), as.character))
-
 
 #pivots longer flipping data so census tracts are 1 column instead of however many
 acs_gross_rent <- acs_gross_rent %>% 
@@ -398,19 +395,69 @@ acs_gross_rent <- acs_gross_rent %>%
                names_to = "NAME", 
                values_to = "mediangrossrent")
 
+acs_gross_rent <- acs_gross_rent %>%
+  mutate(across(starts_with("Census Tract"), as.character))
 
 #cleans census tract column a little
 acs_gross_rent$NAME <-  gsub("!.*", "", acs_gross_rent$NAME)
 acs_gross_rent$NAME <- gsub(",", ";", acs_gross_rent$NAME)
 
-
 #removes label column, only keeping rent and census tract name
 acs_gross_rent <- acs_gross_rent %>% select(NAME,mediangrossrent)
-
 
 #joins gross rent data to hamilton_tract dataset
 hamilton_tract <- hamilton_tract %>% 
   left_join(acs_gross_rent, by = "NAME")
+
+#creates mediangrossrent column on hamilton tract for the groups
+hamilton_tract <- hamilton_tract %>%
+  mutate(
+    mediangrossrent = ifelse(mediangrossrent == '-' | is.na(mediangrossrent), NA, mediangrossrent)
+  )
+
+#converts the mediangrossrent column to numeric
+hamilton_tract <- hamilton_tract %>%
+  mutate(mediangrossrent = as.numeric(mediangrossrent))
+
+#groups mediangrossrent by how much each tract pays for rent
+hamilton_tract <- hamilton_tract %>%
+  mutate(mediangrossrent_group = case_when(
+    mediangrossrent < 250 ~ "<250",
+    mediangrossrent >= 250 & mediangrossrent < 500 ~ "250-500",
+    mediangrossrent >= 500 & mediangrossrent < 750 ~ "500-750",
+    mediangrossrent >= 750 & mediangrossrent < 1000 ~ "750-1000",
+    mediangrossrent >= 1000 & mediangrossrent < 1250 ~ "1000-1250",
+    mediangrossrent >= 1250 & mediangrossrent < 1500 ~ "1250-1500",
+    mediangrossrent >= 1500 & mediangrossrent < 1750 ~ "1500-1750",
+    mediangrossrent >= 1750 & mediangrossrent < 2000 ~ "1750-2000",
+    mediangrossrent >= 2000 & mediangrossrent < 2250 ~ "2000-2250",
+    mediangrossrent >= 2250 & mediangrossrent < 2500 ~ "2250-2500",
+    mediangrossrent >= 2500 ~ "2500+",
+    TRUE ~ NA_character_
+  ))
+
+#factor reorders by levels of rent, the exact scale i just made previously
+hamilton_tract <- hamilton_tract %>%
+  mutate(mediangrossrent_group = factor(
+    mediangrossrent_group,
+    levels = c("<250", "250-500", "500-750", "750-1000", "1000-1250", 
+               "1250-1500", "1500-1750", "1750-2000", "2000-2250", "2250-2500", "2500+")
+  ))
+
+#creates the map based on how much each tract pays for median gross rent
+tm_shape(hamilton_tract) +
+  tm_polygons(
+    col = "mediangrossrent_group",
+    id = "NAME",
+    palette = "Blues",
+    title = "Median Gross Rent"
+  ) +
+  tm_layout(
+    legend.title.size = 1,
+    legend.text.size = 0.8,
+    legend.position = c("left", "bottom")
+  ) +
+  tm_borders(alpha = 0.5)
 
 
 
@@ -552,6 +599,39 @@ hamilton_tract <- hamilton_tract %>%
 
 hamilton_tract <- hamilton_tract %>% 
   mutate(percent_hispaniclat = (hispaniclat/total_population)*100)
+
+
+
+####
+
+
+
+#reads csv for marital status census info
+acs_marital_ham <- read_csv("data/acs_marital.csv")
+
+#removes columns with margins of error
+acs_marital_ham <- acs_marital_ham %>% 
+  select(-contains("Margin of Error"))
+
+#keeps population total row
+acs_marital_ham1 <- acs_marital_ham[1, ]
+
+#filters out columns with Tennessee total estimate based on name variable
+acs_marital_ham1 <- acs_marital_ham1 %>% filter(!grepl("Tennessee!!Total!!Estimate",NAME))
+
+#creates censustract column and varname column used for pivoting wider
+acs_marital_ham1 <- acs_marital_ham1 %>%
+  mutate(censustract=(gsub("!!.*","",NAME)),
+         varname=(gsub(".*Tennessee!!","",NAME)),
+         varname=(gsub("!!Estimate.*", "", varname)))
+
+#pivots wider with varname and value column
+acs_marital_ham2 <- acs_marital_ham1 %>% select(-`Label (Grouping)`,-NAME) %>% 
+  pivot_wider(names_from=varname,values_from=value)
+
+#merges marital dataset with hamilton tract by name and censustract variables.
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_marital_ham2, by = c("NAME" = "censustract"))
 
 
 
