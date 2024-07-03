@@ -111,5 +111,5 @@ varlist_unemployment <- hamilton_tract %>%
   drop_na(percent_unemployed) %>% 
   mutate(vun_unemployed = percent_unemployed/max(percent_unemployed)) %>% 
   arrange(desc(vun_unemployed))
-  
+
 #-------------------------------------------------------------------------------#
