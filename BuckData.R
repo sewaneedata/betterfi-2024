@@ -616,8 +616,14 @@ acs_marital_ham <- acs_marital_ham %>%
 #keeps population total row
 acs_marital_ham1 <- acs_marital_ham[1, ]
 
+#pivot longer
+acs_marital_ham1 <- acs_marital_ham1 %>% 
+  pivot_longer(cols = starts_with("Census Tract"), 
+               names_to = "NAME")
+
 #filters out columns with Tennessee total estimate based on name variable
-acs_marital_ham1 <- acs_marital_ham1 %>% filter(!grepl("Tennessee!!Total!!Estimate",NAME))
+acs_marital_ham1 <- acs_marital_ham1 %>% 
+  filter(!grepl("Tennessee!!Total!!Estimate",NAME))
 
 #creates censustract column and varname column used for pivoting wider
 acs_marital_ham1 <- acs_marital_ham1 %>%
@@ -639,11 +645,48 @@ hamilton_tract <- hamilton_tract %>%
 
 
 
+##looking at just in Hamilton county
+employment <- read_csv('data/employment.csv')
+employment_cleaning <- employment %>% 
+  select(-contains("Margin of Error"))
+#selecting row 5 which is number of employed 
+employment_cleaning1 <- employment_cleaning[5:6,] %>%  
+  # keeping percentages 
+  select('Label (Grouping)', contains("Percent")) %>% 
+  rename(x = `Tennessee!!Percent`)
+# create two columns of unemployed and employed percentages based off census tracks.
+employment_cleaning1 <- employment_cleaning1 %>% 
+  # making each census track a row while getting the percentages for employment and unemployment
+  pivot_longer(cols =  starts_with("Census Tract") & ends_with('Tennessee!!Percent'),
+               names_to = 'metric',
+               values_to = 'value')  %>% 
+  #created new columns of unemployed and employed by using labeling group 
+  pivot_wider(id_cols = metric,
+              names_from = `Label (Grouping)`,
+              values_from = value)
+
+#changing the names of the columns 
+ACS_employment_hamilton<- employment_cleaning1 %>% 
+  rename( NAME = metric)
+#remove the !!Percent from the NAME column
+ACS_employment_hamilton$NAME <- gsub( "!!Percent", "", ACS_employment_hamilton$NAME)
+ACS_employment_hamilton$NAME <- gsub(",", ";", ACS_employment_hamilton$NAME)
+
+hamilton_tract <- hamilton_tract %>% 
+  left_join(ACS_employment_hamilton, by = "NAME")
+
+names(hamilton_tract) <- str_replace_all(names(hamilton_tract), "\\s", "")
+
+
+####
+
+
+
 #--------------------------------MISC.CODE-------------------------------------#
 
 
 #write RData for hamilton tract (main working dataframe)
-save(hamilton_tract, file="hamilton_data.RData")
+save(hamilton_tract, file="data/hamilton_data.RData")
 
 
 #add Company Name to Hamilton Lenders Dataframe

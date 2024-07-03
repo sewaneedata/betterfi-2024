@@ -89,8 +89,27 @@ varlist_mediangrossrent <- hamilton_tract %>%
   select("NAME", "mediangrossrent") %>% 
   mutate(mediangrossrent = as.numeric(mediangrossrent)) %>% 
   drop_na(mediangrossrent) %>% 
+  mutate(vun_mediangrossrent = mediangrossrent/max(mediangrossrent)) %>%
+  mutate(vun_mediangrossrent = 1 - vun_mediangrossrent) %>% 
+  mutate(vun_mediangrossrent = vun_mediangrossrent/max(vun_mediangrossrent, na.rm=TRUE)) %>% 
+  arrange(desc(vun_mediangrossrent))
   
+#percent divorced
+varlist_divorced <- hamilton_tract %>% 
+  select("NAME", "Divorced") %>%
+  mutate(Divorced = as.numeric(gsub("%", "", Divorced))) %>%
+  drop_na(Divorced) %>% 
+  rename(percent_divorced = Divorced) %>% 
+  mutate(vun_divorced = percent_divorced/max(percent_divorced)) %>% 
+  arrange(desc(vun_divorced))
   
+#unemployment
+varlist_unemployment <- hamilton_tract %>% 
+  select("NAME", "Unemployed") %>%
+  rename(percent_unemployed = Unemployed) %>%
+  mutate(percent_unemployed = as.numeric(gsub("%", "", percent_unemployed))) %>%
+  drop_na(percent_unemployed) %>% 
+  mutate(vun_unemployed = percent_unemployed/max(percent_unemployed)) %>% 
+  arrange(desc(vun_unemployed))
   
-
 #-------------------------------------------------------------------------------#
