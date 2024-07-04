@@ -67,68 +67,67 @@ load("data/total_lender_info.RData")
 
 
 #load geography information
-hamilton_tract <- get_acs(geography = "tract",
+tn_tract <- get_acs(geography = "tract",
                      state = "TN",
                      variables = "B01003_001",
-                     county = "Hamilton",
                      year = 2022,
                      geometry = TRUE)
 
 
-#map for hamilton census tracts
+#map for tn census tracts
 tmap_mode("view")
-tm_shape(hamilton_tract)+
+tm_shape(tn_tract)+
   tm_polygons()
 
 
-#create Hamilton County Polygon
-hamilton_county_poly <- st_union(hamilton_tract$geometry)
+#create tn Polygon
+tn_poly <- st_union(tn_tract$geometry)
 
-tm_shape(hamilton_county_poly)+
+tm_shape(tn_county_poly)+
   tm_polygons()
 
 
-#check which points are in Hamilton_polygon
+#check which points are in tn_polygon
 points <- total_lender_info$pnt
 
-st_crs(hamilton_county_poly) <- st_crs(points)
+st_crs(tn_poly) <- st_crs(points)
 
-hamilton_county_lenders <- total_lender_info %>% 
-  mutate(Contained = ifelse(st_within(points, hamilton_county_poly), "Yes", "Not")) %>% 
+tn_lenders <- total_lender_info %>% 
+  mutate(Contained = ifelse(st_within(points, tn_poly), "Yes", "Not")) %>% 
   filter(Contained == "Yes")
 
 
 #create map for hamilton county lenders overlayed on Hamilton county limits
 tmap_mode("view")
 
-tm_shape(hamilton_county_lenders)+ 
+tm_shape(tn_lenders)+ 
   tm_dots()+
-  tm_shape(hamilton_tract)+
+  tm_shape(tn_tract)+
   tm_polygons(alpha = 0.5)
 
 #count lenders in each census tract
-st_crs(hamilton_tract$geometry) <- st_crs(hamilton_county_lenders$pnt)
+st_crs(tn_tract$geometry) <- st_crs(tn_lenders$pnt)
 # find which census tract contains each lender
-m <- st_intersects( hamilton_county_lenders$pnt, hamilton_tract, sparse=FALSE )
+m <- st_intersects( tn_lenders$pnt, tn_tract, sparse=FALSE )
 # idx provides the row of the census tract for the given lender
 idx <- apply(m, 1, which)
 # now get the corresponding census tract names 
-hamilton_county_lenders$tract <- hamilton_tract$NAME[idx]
+tn_lenders$tract <- tn_tract$NAME[idx]
 
 
 #create dataset for lenders per tract
-lenders_per_tract <- hamilton_county_lenders %>% 
+lenders_per_tract <- tn_lenders %>% 
   st_drop_geometry() %>%
   group_by( tract ) %>% 
   tally( name = "n_lenders") %>%
   arrange( desc(n_lenders) )
 
 
-#left join lender_per_tract to Hamilton geometry dataset
-hamilton_tract <- left_join( hamilton_tract, lenders_per_tract %>% rename( NAME = tract ), by = "NAME" )
+#left join lender_per_tract to tn geometry dataset
+tn_tract <- left_join( tn_tract, lenders_per_tract %>% rename( NAME = tract ), by = "NAME" )
 
 #create lender heat map
-tm_shape( hamilton_tract ) + tm_polygons( col="n_lenders", id = "NAME")
+tm_shape( tn_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 
 
 
@@ -137,7 +136,7 @@ tm_shape( hamilton_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 
 
 #load total pop data
-acstotalpophamilton <- read_csv("data/acshamiltonpop.csv")
+tn_pop <- read_csv("D:\kyle_datalab\betterfi-2024\data\tennessee\acs_totalpop_tn.csv")
 
 #clean pop data
 acstotalpophamilton <- acstotalpophamilton %>% 
@@ -616,14 +615,8 @@ acs_marital_ham <- acs_marital_ham %>%
 #keeps population total row
 acs_marital_ham1 <- acs_marital_ham[1, ]
 
-#pivot longer
-acs_marital_ham1 <- acs_marital_ham1 %>% 
-  pivot_longer(cols = starts_with("Census Tract"), 
-               names_to = "NAME")
-
 #filters out columns with Tennessee total estimate based on name variable
-acs_marital_ham1 <- acs_marital_ham1 %>% 
-  filter(!grepl("Tennessee!!Total!!Estimate",NAME))
+acs_marital_ham1 <- acs_marital_ham1 %>% filter(!grepl("Tennessee!!Total!!Estimate",NAME))
 
 #creates censustract column and varname column used for pivoting wider
 acs_marital_ham1 <- acs_marital_ham1 %>%
@@ -645,48 +638,11 @@ hamilton_tract <- hamilton_tract %>%
 
 
 
-##looking at just in Hamilton county
-employment <- read_csv('data/employment.csv')
-employment_cleaning <- employment %>% 
-  select(-contains("Margin of Error"))
-#selecting row 5 which is number of employed 
-employment_cleaning1 <- employment_cleaning[5:6,] %>%  
-  # keeping percentages 
-  select('Label (Grouping)', contains("Percent")) %>% 
-  rename(x = `Tennessee!!Percent`)
-# create two columns of unemployed and employed percentages based off census tracks.
-employment_cleaning1 <- employment_cleaning1 %>% 
-  # making each census track a row while getting the percentages for employment and unemployment
-  pivot_longer(cols =  starts_with("Census Tract") & ends_with('Tennessee!!Percent'),
-               names_to = 'metric',
-               values_to = 'value')  %>% 
-  #created new columns of unemployed and employed by using labeling group 
-  pivot_wider(id_cols = metric,
-              names_from = `Label (Grouping)`,
-              values_from = value)
-
-#changing the names of the columns 
-ACS_employment_hamilton<- employment_cleaning1 %>% 
-  rename( NAME = metric)
-#remove the !!Percent from the NAME column
-ACS_employment_hamilton$NAME <- gsub( "!!Percent", "", ACS_employment_hamilton$NAME)
-ACS_employment_hamilton$NAME <- gsub(",", ";", ACS_employment_hamilton$NAME)
-
-hamilton_tract <- hamilton_tract %>% 
-  left_join(ACS_employment_hamilton, by = "NAME")
-
-names(hamilton_tract) <- str_replace_all(names(hamilton_tract), "\\s", "")
-
-
-####
-
-
-
 #--------------------------------MISC.CODE-------------------------------------#
 
 
 #write RData for hamilton tract (main working dataframe)
-save(hamilton_tract, file="data/hamilton_data.RData")
+save(hamilton_tract, file="hamilton_data.RData")
 
 
 #add Company Name to Hamilton Lenders Dataframe
@@ -708,3 +664,34 @@ tn_geo <- get_acs(geography = "tract",
 
 
 #------------------------------------------------------------------------------#
+
+#reads csv for marital status census info
+acs_marital_ham <- read_csv("D:/kyle_datalab/betterfi-2024/data/hamilton/acs_marital.csv")
+
+#removes columns with margins of error
+acs_marital_ham <- acs_marital_ham %>% 
+  select(-contains("Margin of Error"))
+
+#keeps population total row
+acs_marital_ham1 <- acs_marital_ham[1, ]
+
+acs_marital_ham1 <- acs_marital_ham1 %>% 
+  pivot_longer(cols = starts_with("Census Tract"), 
+               names_to = "NAME")
+
+#filters out columns with Tennessee total estimate based on name variable
+acs_marital_ham1 <- acs_marital_ham1 %>% filter(!grepl("Tennessee!!Total!!Estimate",NAME))
+
+#creates censustract column and varname column used for pivoting wider
+acs_marital_ham1 <- acs_marital_ham1 %>%
+  mutate(censustract=(gsub("!!.*","",NAME)),
+         varname=(gsub(".*Tennessee!!","",NAME)),
+         varname=(gsub("!!Estimate.*", "", varname)))
+
+#pivots wider with varname and value column
+acs_marital_ham2 <- acs_marital_ham1 %>% select(-`Label (Grouping)`,-NAME) %>% 
+  pivot_wider(names_from=varname,values_from=value)
+
+#merges marital dataset with hamilton tract by name and censustract variables.
+hamilton_tract <- hamilton_tract %>% 
+  left_join(acs_marital_ham2, by = c("NAME" = "censustract"))
