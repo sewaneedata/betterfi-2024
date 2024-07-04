@@ -189,4 +189,36 @@ total_info_join <- total_info %>%
   select("Company Name", "address")
 
 hamilton_county_lenders <- hamilton_county_lenders %>%
-  left_join(total_info_join, by = "address")
+  left_join(total_info_join, by = "address") #%>%
+ 
+#rename(postal_code = `Postal Code`)
+
+hamilton_county_lenders <- hamilton_county_lenders %>%
+  rename(company_name = `Company Name`) 
+
+hamilton_county_companies <- hamilton_county_lenders %>% 
+  group_by(company_name) %>%
+  tally() %>%
+  mutate(percentage = n/43*100) 
+  #select(`Company Name`, n)
+
+#Top 5 companies own 67% (two thirds) of the predatory lending locations in Chattanooga. Another 9 companies own the remaining third, with 5 having just one location. 
+
+#There's 30 flex lending companies in Tennessee despite 603 stores offering them. Top 4 companies own two thirds of the flex lenders.
+flex_lender_count <- flex_info %>% 
+  group_by(`Company Name`) %>%
+  tally() %>%
+  mutate(percentage = n/603*100) 
+
+#Same as above for title
+title_lender_count <- title_info %>% 
+  group_by(`Company Name`) %>%
+  tally() %>%
+  mutate(percentage = n/428*100) 
+
+payday_lender_count <- payday_info %>% 
+  group_by(`Company Name`) %>%
+  tally() %>%
+  mutate(percentage = n/554*100) 
+
+
