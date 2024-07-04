@@ -97,7 +97,7 @@ tn_lenders <- total_lender_info %>%
   filter(Contained == "Yes")
 
 
-#create map for hamilton county lenders overlayed on Hamilton county limits
+#create map for tn county lenders overlayed on tn county limits
 tmap_mode("view")
 
 tm_shape(tn_lenders)+ 
@@ -133,29 +133,29 @@ tm_shape( tn_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 
 ####
 
-
+Sys.setenv("VROOM_CONNECTION_SIZE"=5000000)
 
 #load total pop data
-tn_pop <- read_csv("D:\kyle_datalab\betterfi-2024\data\tennessee\acs_totalpop_tn.csv")
+tn_pop <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_totalpop_tn.csv")
 
 #clean pop data
-acstotalpophamilton <- acstotalpophamilton %>% 
+tn_pop <- tn_pop %>% 
   select(-contains("Margin of Error"))
 
-acstotalpophamilton <- acstotalpophamilton %>% 
+tn_pop <- tn_pop %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "total_population") 
 
 
-#match tract names with hamilton_tract
-acstotalpophamilton$NAME <-  gsub("!.*", "", acstotalpophamilton$NAME)
-acstotalpophamilton$NAME <- gsub(",", ";", acstotalpophamilton$NAME)
+#match tract names with tn_tract
+tn_pop$NAME <-  gsub("!.*", "", tn_pop$NAME)
+tn_pop$NAME <- gsub(",", ";", tn_pop$NAME)
 
-acstotalpophamilton <- acstotalpophamilton %>% select(NAME,total_population)
+tn_pop <- tn_pop %>% select(NAME,total_population)
 
 
-#left_join pop data to hamilton_tract
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acstotalpophamilton, by = "NAME") 
+#left_join pop data to tn_tract
+tn_tract <- tn_tract %>% 
+  left_join(tn_pop, by = "NAME") 
 
 
 
@@ -165,32 +165,32 @@ hamilton_tract <- hamilton_tract %>%
 
 #create average income for each census tract
 #Get ACS Income Data for Income
-#Just Hamilton County
-ACS_income_hamilton <- read_csv("data/ACS5_hamilton_income.csv")
-ACS_income_hamilton <- ACS_income_hamilton %>% 
+#Just tn County
+acs_income_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_income_tn.csv")
+acs_income_tn <- acs_income_tn %>% 
   select(-contains("Margin of Error")) %>% 
   select(contains("Household")) %>% 
   select(-contains("Nonfamily")) 
 
 
 #Select just Average Income, Pivot Longer to have just one row per census tract
-ACS_income_hamilton <- ACS_income_hamilton[13, ] #select just row 13 which is average income
-ACS_income_hamilton <- ACS_income_hamilton %>% 
+acs_income_tn <- acs_income_tn[13, ] #select just row 13 which is average income
+acs_income_tn <- acs_income_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "avg_income") 
 
 
-#change census names to match "hamilton_tract"
-ACS_income_hamilton$NAME <-  gsub("!.*", "", ACS_income_hamilton$NAME)
-ACS_income_hamilton$NAME <- gsub(",", ";", ACS_income_hamilton$NAME)
+#change census names to match "tn_tract"
+acs_income_tn$NAME <-  gsub("!.*", "", acs_income_tn$NAME)
+acs_income_tn$NAME <- gsub(",", ";", acs_income_tn$NAME)
 
-#join avg_income to Hamilton_tract
-hamilton_tract <- hamilton_tract %>% 
-  left_join(ACS_income_hamilton, by = "NAME")
+#join avg_income to tn_tract
+tn_tract <- tn_tract %>% 
+  left_join(acs_income_tn, by = "NAME")
 
-hamilton_tract$avg_income <- gsub(",", "", hamilton_tract$avg_income)
+tn_tract$avg_income <- gsub(",", "", tn_tract$avg_income)
 
 #create income level groups
-hamilton_tract<- hamilton_tract %>% 
+tn_tract<- tn_tract %>% 
   mutate(avg_income = ifelse(avg_income == '-', NA, avg_income)) %>% 
   mutate(avg_income = as.numeric(avg_income)) %>% 
   mutate(avg_income_group = case_when(
@@ -209,7 +209,7 @@ hamilton_tract<- hamilton_tract %>%
   mutate(avg_income_group=fct_reorder(factor(avg_income_group), avg_income, .na_rm = TRUE))#factor reorder for viewing ease
 
 #create chloropleth for income
-tm_shape(hamilton_tract)+
+tm_shape(tn_tract)+
   tm_polygons( col = "avg_income_group", id="NAME", palette = "Blues")
 
 
@@ -219,67 +219,63 @@ tm_shape(hamilton_tract)+
 
 
 #load citizen data
-acs_citizen <- read_csv("data/acs_nativity_citizenshiphamilton.csv")
+acs_citizen_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_citizenship_tn.csv")
 
 #clean citizen data and names
-acs_citizen <- acs_citizen %>% 
+acs_citizen_tn <- acs_citizen_tn %>% 
   select(-contains("Margin of Error"))
 
 #select citizen rows for left_join
-acs_citizen_hamilton <- acs_citizen[2, ]
-acs_noncitizen_hamilton <- acs_citizen[6, ]
+acs_citizen_tn1 <- acs_citizen_tn[2, ]
+acs_noncitizen_tn <- acs_citizen_tn[6, ]
 
 #pivot for left_join
-acs_citizen_hamilton <- acs_citizen_hamilton %>% 
+acs_citizen_tn1 <- acs_citizen_tn1 %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "citizens") 
 
-acs_noncitizen_hamilton <- acs_noncitizen_hamilton %>% 
+acs_noncitizen_tn <- acs_noncitizen_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "noncitizens") 
 
-#change census names to match "hamilton_tract"
-acs_citizen_hamilton$NAME <-  gsub("!.*", "", acs_citizen_hamilton$NAME)
-acs_citizen_hamilton$NAME <- gsub(",", ";", acs_citizen_hamilton$NAME)
+#change census names to match "tn_tract"
+acs_citizen_tn1$NAME <-  gsub("!.*", "", acs_citizen_tn1$NAME)
+acs_citizen_tn1$NAME <- gsub(",", ";", acs_citizen_tn1$NAME)
 
-acs_citizen_hamilton <- acs_citizen_hamilton %>% select(NAME,citizens)
+acs_citizen_tn1 <- acs_citizen_tn1 %>% select(NAME,citizens)
 
-acs_noncitizen_hamilton$NAME <-  gsub("!.*", "", acs_noncitizen_hamilton$NAME)
-acs_noncitizen_hamilton$NAME <- gsub(",", ";", acs_noncitizen_hamilton$NAME)
+acs_noncitizen_tn$NAME <-  gsub("!.*", "", acs_noncitizen_tn$NAME)
+acs_noncitizen_tn$NAME <- gsub(",", ";", acs_noncitizen_tn$NAME)
 
-acs_noncitizen_hamilton <- acs_noncitizen_hamilton %>% select(NAME,noncitizens)
+acs_noncitizen_tn <- acs_noncitizen_tn %>% select(NAME,noncitizens)
 
 #left join 
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_citizen_hamilton, by = "NAME")
+tn_tract <- tn_tract %>% 
+  left_join(acs_citizen_tn1, by = "NAME")
 
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_noncitizen_hamilton, by = "NAME") 
+tn_tract <- tn_tract %>% 
+  left_join(acs_noncitizen_tn, by = "NAME") 
 
 #mutate %citizen and %noncitizen
-hamilton_tract <- hamilton_tract %>% 
+tn_tract <- tn_tract %>% 
   mutate(percent_citizen = (citizens/total_population)*100) %>% 
   mutate(percent_noncitizen = (noncitizens/total_population)*100)%>% 
   select(-"citizens") %>% 
   select(-"noncitizens")
 
-
-
 ####
 
-
-
 #load education data
-hamilton_edu <- read_csv("data/education_level.csv")
-#hamilton_edu_meta <- read_csv("data/Hamilton-Education-Column-Metadata.csv")
+tn_edu <- read_csv("data/education_level.csv")
+#tn_edu_meta <- read_csv("data/tn-Education-Column-Metadata.csv")
 
 #select Highschool education data
-hamilton_edu <- hamilton_edu %>% 
+tn_edu <- tn_edu %>% 
   select("NAME", "S1501_C02_002E", "S1501_C01_001E", "S1501_C01_007E", "S1501_C01_008E", "S1501_C01_006E")
 
 #remove first row
-hamilton_edu <- hamilton_edu[-1, ] 
+tn_edu <- tn_edu[-1, ] 
 
 #rename education columns
-names(hamilton_edu) <- c(
+names(tn_edu) <- c(
     "NAME", #NAME,
     "18NOhighschool", #"S1501_C01_002E",
     "18total", #"S1501_C01_001E"
@@ -290,7 +286,7 @@ names(hamilton_edu) <- c(
     )
 
 #mutate columns from character to numeric
-hamilton_edu <- hamilton_edu %>% 
+tn_edu <- tn_edu %>% 
   mutate(`18NOhighschool` = as.numeric(`18NOhighschool`)) %>% 
   mutate(`18total` = as.numeric(`18total`)) %>% 
   mutate(`25NO9th` = as.numeric(`25NO9th`)) %>% 
@@ -299,30 +295,30 @@ hamilton_edu <- hamilton_edu %>%
 
 
 #mutate columns for 18 and 25 than HAVE GRADUATED HIGHSCHOOL
-hamilton_edu <- hamilton_edu %>% 
+tn_edu <- tn_edu %>% 
   mutate(`18highschool` = `18total` - `18NOhighschool`) %>% 
   mutate(`25highschool` = `25total` - `25NOhighschool` - `25NO9th`)
 
 
 #mutate column for total pop and total highschool graduation pop
-hamilton_edu <- hamilton_edu %>% 
+tn_edu <- tn_edu %>% 
   mutate(total_pop = `18total` + `25total`) %>% 
   mutate(total_highschool_pop = `25highschool` + `18highschool`)
 
-hamilton_edu <- hamilton_edu %>% 
+tn_edu <- tn_edu %>% 
   mutate(total_percent_highschool = (total_highschool_pop/total_pop)*100) 
 
-hamilton_edu <- hamilton_edu %>% 
+tn_edu <- tn_edu %>% 
   select("NAME", "total_percent_highschool")
 
 
-#left_join highschool education to hamilton_tract
-hamilton_tract <- hamilton_tract %>% 
-  left_join(hamilton_edu, by = "NAME")
+#left_join highschool education to tn_tract
+tn_tract <- tn_tract %>% 
+  left_join(tn_edu, by = "NAME")
 
 
 #heat map for education
-tm_shape(hamilton_tract)+
+tm_shape(tn_tract)+
   tm_polygons(col = "total_percent_highschool")
 
 
@@ -332,12 +328,43 @@ tm_shape(hamilton_tract)+
 
 
 #load marital data
-acs_marital <- read_csv("data/acs_marital.csv") 
+acs_marital_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_marital_tn.csv") 
+
+#removes columns with margins of error
+acs_marital_tn <- acs_marital_tn %>% 
+  select(-contains("Margin of Error"))
+
+#keeps population total row
+acs_marital_tn1 <- acs_marital_tn[1, ]
 
 #pivot acs_marital
-acs_marital <- acs_marital %>% 
+acs_marital_tn1 <- acs_marital_tn1 %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "values")
 
+# #keeps population total row
+# acs_marital_tn1 <- acs_marital_tn[1, ]
+
+# #pivots longer flipping data so census tracts are 1 column instead of however many
+# acs_marital_tn1 <- acs_marital_tn1 %>% 
+#   pivot_longer(cols = starts_with("Census Tract"), 
+#                names_to = "NAME")
+
+#filters out columns with Tennessee total estimate based on name variable
+acs_marital_tn1 <- acs_marital_tn1 %>% filter(!grepl("Tennessee!!Total!!Estimate",NAME))
+
+#creates censustract column and varname column used for pivoting wider
+acs_marital_tn1 <- acs_marital_tn1 %>%
+  mutate(censustract=(gsub("!!.*","",NAME)),
+         varname=(gsub(".*Tennessee!!","",NAME)),
+         varname=(gsub("!!Estimate.*", "", varname)))
+
+#pivots wider with varname and value column
+acs_marital_tn2 <- acs_marital_tn1 %>% select(-`Label (Grouping)`,-NAME) %>% 
+  pivot_wider(names_from=varname,values_from=values)
+
+#merges marital dataset with tn tract by name and censustract variables.
+tn_tract <- tn_tract %>% 
+  left_join(acs_marital_tn2, by = c("NAME" = "censustract"))
 
 
 ####
@@ -345,81 +372,78 @@ acs_marital <- acs_marital %>%
 
 
 #load veteran data
-acs_veteran <- read_csv("data/acs_veteran.csv")
+acs_veteran_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_veteran_tn.csv")
 
 
 #keep only the first row
-acs_veteran <- acs_veteran[1, ]
+acs_veteran_tn <- acs_veteran_tn[1, ]
 
 
 #select only percent veteran estimates
-acs_veteran <- acs_veteran %>% 
+acs_veteran_tn <- acs_veteran_tn %>% 
   select(contains("Percent Veterans")) %>% 
   select(-contains("Margin of Error"))
 
 
 #pivot for left_join
-acs_veteran <- acs_veteran %>% 
+acs_veteran_tn <- acs_veteran_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "percent_veteran")
 
 #clean NAME for left join
-acs_veteran$NAME <-  gsub("!.*", "", acs_veteran$NAME)
-acs_veteran$NAME <- gsub(",", ";", acs_veteran$NAME)
+acs_veteran_tn$NAME <-  gsub("!.*", "", acs_veteran_tn$NAME)
+acs_veteran_tn$NAME <- gsub(",", ";", acs_veteran_tn$NAME)
 
 
 #left_join veteran data
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_veteran, by = "NAME")
-
-
+tn_tract <- tn_tract %>% 
+  left_join(acs_veteran_tn, by = "NAME")
 
 ####
 
 
-
 #loads median gross rent
-acs_gross_rent <- read_csv("data/acs_gross_rent.csv")
+acs_gross_rent_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_grossrent_tn.csv")
 
 #clears margins of error columns
-acs_gross_rent <- acs_gross_rent %>% 
+acs_gross_rent_tn <- acs_gross_rent_tn %>% 
   select(-contains("Margin of Error"))
 
 #converts columns to as character in order to pivot longer
-acs_gross_rent <- acs_gross_rent %>%
+acs_gross_rent_tn <- acs_gross_rent_tn %>%
   mutate(across(starts_with("Census Tract"), as.character))
 
 #pivots longer flipping data so census tracts are 1 column instead of however many
-acs_gross_rent <- acs_gross_rent %>% 
+acs_gross_rent_tn <- acs_gross_rent_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), 
                names_to = "NAME", 
                values_to = "mediangrossrent")
 
-acs_gross_rent <- acs_gross_rent %>%
+acs_gross_rent_tn <- acs_gross_rent_tn %>%
   mutate(across(starts_with("Census Tract"), as.character))
 
 #cleans census tract column a little
-acs_gross_rent$NAME <-  gsub("!.*", "", acs_gross_rent$NAME)
-acs_gross_rent$NAME <- gsub(",", ";", acs_gross_rent$NAME)
+acs_gross_rent_tn$NAME <-  gsub("!.*", "", acs_gross_rent_tn$NAME)
+acs_gross_rent_tn$NAME <- gsub(",", ";", acs_gross_rent_tn$NAME)
 
 #removes label column, only keeping rent and census tract name
-acs_gross_rent <- acs_gross_rent %>% select(NAME,mediangrossrent)
+acs_gross_rent_tn <- acs_gross_rent_tn %>% select(NAME,mediangrossrent)
 
-#joins gross rent data to hamilton_tract dataset
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_gross_rent, by = "NAME")
+#joins gross rent data to tn_tract dataset
+tn_tract <- tn_tract %>% 
+  left_join(acs_gross_rent_tn, by = "NAME")
 
-#creates mediangrossrent column on hamilton tract for the groups
-hamilton_tract <- hamilton_tract %>%
+#creates mediangrossrent column on tn tract for the groups
+tn_tract <- tn_tract %>%
   mutate(
     mediangrossrent = ifelse(mediangrossrent == '-' | is.na(mediangrossrent), NA, mediangrossrent)
   )
 
 #converts the mediangrossrent column to numeric
-hamilton_tract <- hamilton_tract %>%
+tn_tract <- tn_tract %>%
   mutate(mediangrossrent = as.numeric(mediangrossrent))
 
 #groups mediangrossrent by how much each tract pays for rent
-hamilton_tract <- hamilton_tract %>%
+tn_tract <- tn_tract %>%
   mutate(mediangrossrent_group = case_when(
     mediangrossrent < 250 ~ "<250",
     mediangrossrent >= 250 & mediangrossrent < 500 ~ "250-500",
@@ -436,7 +460,7 @@ hamilton_tract <- hamilton_tract %>%
   ))
 
 #factor reorders by levels of rent, the exact scale i just made previously
-hamilton_tract <- hamilton_tract %>%
+tn_tract <- tn_tract %>%
   mutate(mediangrossrent_group = factor(
     mediangrossrent_group,
     levels = c("<250", "250-500", "500-750", "750-1000", "1000-1250", 
@@ -444,7 +468,7 @@ hamilton_tract <- hamilton_tract %>%
   ))
 
 #creates the map based on how much each tract pays for median gross rent
-tm_shape(hamilton_tract) +
+tm_shape(tn_tract) +
   tm_polygons(
     col = "mediangrossrent_group",
     id = "NAME",
@@ -465,87 +489,87 @@ tm_shape(hamilton_tract) +
 
 
 #load race data
-acs_race_hamilton <- read_csv("data/acs_detailedrace_hamilton.csv")#reads race info csv
+acs_race_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_detailedrace_tn.csv")#reads race info csv
 
 
 #This line removes margin of error column
-acs_race_hamilton <- acs_race_hamilton %>% 
+acs_race_tn <- acs_race_tn %>% 
   select(-contains("Margin of Error"))
 
 
-#These lines make new datasets of just the row for individuals based on race in hamilton county
-acs_white_hamilton <- acs_race_hamilton[3, ]
-acs_black_hamilton <- acs_race_hamilton[4, ]
-acs_nativeamerican_hamilton <- acs_race_hamilton[5, ]
-acs_asian_hamilton <- acs_race_hamilton[6, ]
-acs_hawaiian_hamilton <- acs_race_hamilton[7, ]
-acs_otherrace_hamilton <- acs_race_hamilton[8, ]
+#These lines make new datasets of just the row for individuals based on race in tn county
+acs_white_tn <- acs_race_tn[3, ]
+acs_black_tn <- acs_race_tn[4, ]
+acs_nativeamerican_tn <- acs_race_tn[5, ]
+acs_asian_tn <- acs_race_tn[6, ]
+acs_hawaiian_tn <- acs_race_tn[7, ]
+acs_otherrace_tn <- acs_race_tn[8, ]
 
 
 #These lines pivot longer to flip the datasets around to where census tracts are 1 column and the rows are which census tract in particular and there is a column for individuals of race
-acs_white_hamilton <- acs_white_hamilton %>% 
+acs_white_tn <- acs_white_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "white") 
-acs_black_hamilton <- acs_black_hamilton %>% 
+acs_black_tn <- acs_black_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "black") 
-acs_nativeamerican_hamilton <- acs_nativeamerican_hamilton %>% 
+acs_nativeamerican_tn <- acs_nativeamerican_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "nativeamerican") 
-acs_asian_hamilton <- acs_asian_hamilton %>% 
+acs_asian_tn <- acs_asian_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "asian") 
-acs_hawaiian_hamilton <- acs_hawaiian_hamilton %>% 
+acs_hawaiian_tn <- acs_hawaiian_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "hawaiianorislander") 
-acs_otherrace_hamilton <- acs_otherrace_hamilton %>% 
+acs_otherrace_tn <- acs_otherrace_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "otherrace") 
 
 
 #these lines make the census tract column entries a little cleaner
-acs_white_hamilton$NAME <-  gsub("!.*", "", acs_white_hamilton$NAME)
-acs_white_hamilton$NAME <- gsub(",", ";", acs_white_hamilton$NAME)
-acs_black_hamilton$NAME <-  gsub("!.*", "", acs_black_hamilton$NAME)
-acs_black_hamilton$NAME <- gsub(",", ";", acs_black_hamilton$NAME)
-acs_nativeamerican_hamilton$NAME <-  gsub("!.*", "", acs_nativeamerican_hamilton$NAME)
-acs_nativeamerican_hamilton$NAME <- gsub(",", ";", acs_nativeamerican_hamilton$NAME)
-acs_asian_hamilton$NAME <-  gsub("!.*", "", acs_asian_hamilton$NAME)
-acs_asian_hamilton$NAME <- gsub(",", ";", acs_asian_hamilton$NAME)
-acs_hawaiian_hamilton$NAME <-  gsub("!.*", "", acs_hawaiian_hamilton$NAME)
-acs_hawaiian_hamilton$NAME <- gsub(",", ";", acs_hawaiian_hamilton$NAME)
-acs_otherrace_hamilton$NAME <-  gsub("!.*", "", acs_otherrace_hamilton$NAME)
-acs_otherrace_hamilton$NAME <- gsub(",", ";", acs_otherrace_hamilton$NAME)
+acs_white_tn$NAME <-  gsub("!.*", "", acs_white_tn$NAME)
+acs_white_tn$NAME <- gsub(",", ";", acs_white_tn$NAME)
+acs_black_tn$NAME <-  gsub("!.*", "", acs_black_tn$NAME)
+acs_black_tn$NAME <- gsub(",", ";", acs_black_tn$NAME)
+acs_nativeamerican_tn$NAME <-  gsub("!.*", "", acs_nativeamerican_tn$NAME)
+acs_nativeamerican_tn$NAME <- gsub(",", ";", acs_nativeamerican_tn$NAME)
+acs_asian_tn$NAME <-  gsub("!.*", "", acs_asian_tn$NAME)
+acs_asian_tn$NAME <- gsub(",", ";", acs_asian_tn$NAME)
+acs_hawaiian_tn$NAME <-  gsub("!.*", "", acs_hawaiian_tn$NAME)
+acs_hawaiian_tn$NAME <- gsub(",", ";", acs_hawaiian_tn$NAME)
+acs_otherrace_tn$NAME <-  gsub("!.*", "", acs_otherrace_tn$NAME)
+acs_otherrace_tn$NAME <- gsub(",", ";", acs_otherrace_tn$NAME)
 
 
 #the next lines drop the label column because it is unnecessary and we need to get rid of it for merging
-acs_white_hamilton <- acs_white_hamilton %>% select(NAME,white)
-acs_black_hamilton <- acs_black_hamilton %>% select(NAME,black)
-acs_nativeamerican_hamilton <- acs_nativeamerican_hamilton %>% select(NAME,nativeamerican)
-acs_asian_hamilton <- acs_asian_hamilton %>% select(NAME,asian)
-acs_hawaiian_hamilton <- acs_hawaiian_hamilton %>% select(NAME,hawaiianorislander)
-acs_otherrace_hamilton <- acs_otherrace_hamilton %>% select(NAME,otherrace)
+acs_white_tn <- acs_white_tn %>% select(NAME,white)
+acs_black_tn <- acs_black_tn %>% select(NAME,black)
+acs_nativeamerican_tn <- acs_nativeamerican_tn %>% select(NAME,nativeamerican)
+acs_asian_tn <- acs_asian_tn %>% select(NAME,asian)
+acs_hawaiian_tn <- acs_hawaiian_tn %>% select(NAME,hawaiianorislander)
+acs_otherrace_tn <- acs_otherrace_tn %>% select(NAME,otherrace)
 
 
-#next lines merge the datasets into the hamilton tract main set
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_white_hamilton, by = "NAME")
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_black_hamilton, by = "NAME")
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_nativeamerican_hamilton, by = "NAME")
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_asian_hamilton, by = "NAME")
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_hawaiian_hamilton, by = "NAME")
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_otherrace_hamilton, by = "NAME")
+#next lines merge the datasets into the tn tract main set
+tn_tract <- tn_tract %>% 
+  left_join(acs_white_tn, by = "NAME")
+tn_tract <- tn_tract %>% 
+  left_join(acs_black_tn, by = "NAME")
+tn_tract <- tn_tract %>% 
+  left_join(acs_nativeamerican_tn, by = "NAME")
+tn_tract <- tn_tract %>% 
+  left_join(acs_asian_tn, by = "NAME")
+tn_tract <- tn_tract %>% 
+  left_join(acs_hawaiian_tn, by = "NAME")
+tn_tract <- tn_tract %>% 
+  left_join(acs_otherrace_tn, by = "NAME")
 
 
 #create percent race columns
-hamilton_tract <- hamilton_tract %>% 
+tn_tract <- tn_tract %>% 
   mutate(percent_white = (white/total_population)*100)
-hamilton_tract <- hamilton_tract %>% 
+tn_tract <- tn_tract %>% 
   mutate(percent_black = (black/total_population)*100)
-hamilton_tract <- hamilton_tract %>% 
+tn_tract <- tn_tract %>% 
   mutate(percent_nativeamerican = (nativeamerican/total_population)*100)
-hamilton_tract <- hamilton_tract %>% 
+tn_tract <- tn_tract %>% 
   mutate(percent_hawaiianorislander = (hawaiianorislander/total_population)*100)
-hamilton_tract <- hamilton_tract %>% 
+tn_tract <- tn_tract %>% 
   mutate(percent_otherrace = (otherrace/total_population)*100)
 
 
@@ -553,106 +577,97 @@ hamilton_tract <- hamilton_tract %>%
 ####
 
 
-#reads csv for hispanic or latino individuals in hamilton county
-acs_hl_hamilton <- read_csv("data/acs_hispanic_or_latino_hamilton.csv") 
+#reads csv for hispanic or latino individuals in tn county
+acs_hl_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_hispaniclatino_tn.csv") 
 
 
 #removes margin of error column
-acs_hl_hamilton <- acs_hl_hamilton %>% select(-contains("Margin of Error"))
+acs_hl_tn <- acs_hl_tn %>% select(-contains("Margin of Error"))
 
 
 #keeps row of hispanic individuals as own dataset
-acs_hispanic_hamilton <- acs_hl_hamilton[3, ] 
+acs_hispanic_tn <- acs_hl_tn[3, ] 
 #makes new dataset of nonhispanic individuals
-acs_nonhispanic_hamilton <- acs_hl_hamilton[2, ]
+acs_nonhispanic_tn <- acs_hl_tn[2, ]
 
 
 #pivots longer so it flips it around so census tracts are rows and not columns
-acs_hispanic_hamilton <- acs_hispanic_hamilton %>% 
+acs_hispanic_tn <- acs_hispanic_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "hispaniclat") 
 
-acs_nonhispanic_hamilton <- acs_nonhispanic_hamilton %>% 
+acs_nonhispanic_tn <- acs_nonhispanic_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "nonhispaniclat") 
+
 #Create data frames for hispanic and nonhispanic
-acs_hispanic_hamilton <- acs_hispanic_hamilton %>% select(NAME,hispaniclat) 
+acs_hispanic_tn <- acs_hispanic_tn %>% select(NAME,hispaniclat) 
 
-acs_nonhispanic_hamilton <- acs_nonhispanic_hamilton %>% select(NAME,nonhispaniclat)
+acs_nonhispanic_tn <- acs_nonhispanic_tn %>% select(NAME,nonhispaniclat)
 
 
-#clean NAME column for left_join into hamilton_tract
-acs_hispanic_hamilton$NAME <-  gsub("!.*", "", acs_hispanic_hamilton$NAME)
-acs_hispanic_hamilton$NAME <- gsub(",", ";", acs_hispanic_hamilton$NAME)
+#clean NAME column for left_join into tn_tract
+acs_hispanic_tn$NAME <-  gsub("!.*", "", acs_hispanic_tn$NAME)
+acs_hispanic_tn$NAME <- gsub(",", ";", acs_hispanic_tn$NAME)
 
-acs_nonhispanic_hamilton$NAME <-  gsub("!.*", "", acs_nonhispanic_hamilton$NAME)
-acs_nonhispanic_hamilton$NAME <- gsub(",", ";", acs_nonhispanic_hamilton$NAME)
+acs_nonhispanic_tn$NAME <-  gsub("!.*", "", acs_nonhispanic_tn$NAME)
+acs_nonhispanic_tn$NAME <- gsub(",", ";", acs_nonhispanic_tn$NAME)
 
 
 #joins hispanic individuals dataset to the main dataset
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_hispanic_hamilton, by = "NAME")
+tn_tract <- tn_tract %>% 
+  left_join(acs_hispanic_tn, by = "NAME")
 
 
 #joins nonhispanic individuals to the main dataset
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_nonhispanic_hamilton, by = "NAME")
+tn_tract <- tn_tract %>% 
+  left_join(acs_nonhispanic_tn, by = "NAME")
 
-hamilton_tract <- hamilton_tract %>% 
+tn_tract <- tn_tract %>% 
   mutate(percent_hispaniclat = (hispaniclat/total_population)*100)
 
 
 
-####
-
-
-
-#reads csv for marital status census info
-acs_marital_ham <- read_csv("data/acs_marital.csv")
-
-#removes columns with margins of error
-acs_marital_ham <- acs_marital_ham %>% 
-  select(-contains("Margin of Error"))
-
-#keeps population total row
-acs_marital_ham1 <- acs_marital_ham[1, ]
-
-#filters out columns with Tennessee total estimate based on name variable
-acs_marital_ham1 <- acs_marital_ham1 %>% filter(!grepl("Tennessee!!Total!!Estimate",NAME))
-
-#creates censustract column and varname column used for pivoting wider
-acs_marital_ham1 <- acs_marital_ham1 %>%
-  mutate(censustract=(gsub("!!.*","",NAME)),
-         varname=(gsub(".*Tennessee!!","",NAME)),
-         varname=(gsub("!!Estimate.*", "", varname)))
-
-#pivots wider with varname and value column
-acs_marital_ham2 <- acs_marital_ham1 %>% select(-`Label (Grouping)`,-NAME) %>% 
-  pivot_wider(names_from=varname,values_from=value)
-
-#merges marital dataset with hamilton tract by name and censustract variables.
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_marital_ham2, by = c("NAME" = "censustract"))
-
-
 
 ####
+
+#load education csv
+acs_edu_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_edu_tn.csv")
+
+#removes margin of error column
+acs_edu_tn <- acs_edu_tn %>% select(-contains("Margin of Error"))
+
+acs_edu_tn <- acs_edu_tn %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME") 
+
+acs_edu_tn <- acs_edu_tn %>% slice(-(1:10206))
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 #--------------------------------MISC.CODE-------------------------------------#
 
 
-#write RData for hamilton tract (main working dataframe)
-save(hamilton_tract, file="hamilton_data.RData")
+#write RData for tn tract (main working dataframe)
+save(tn_tract, file="tn_data.RData")
 
 
-#add Company Name to Hamilton Lenders Dataframe
+#add Company Name to tn Lenders Dataframe
 total_info_join <- total_info %>%
   rename(address = full_address) %>%
   select("Company Name", "address")
 
-hamilton_county_lenders <- hamilton_county_lenders %>%
+tn_county_lenders <- tn_county_lenders %>%
   left_join(total_info_join, by = "address") 
-hamilton_county_lenders <- hamilton_county_lenders %>%
+tn_county_lenders <- tn_county_lenders %>%
   rename(company_name = `Company Name`)
 
 #total tn geography info
@@ -665,33 +680,3 @@ tn_geo <- get_acs(geography = "tract",
 
 #------------------------------------------------------------------------------#
 
-#reads csv for marital status census info
-acs_marital_ham <- read_csv("D:/kyle_datalab/betterfi-2024/data/hamilton/acs_marital.csv")
-
-#removes columns with margins of error
-acs_marital_ham <- acs_marital_ham %>% 
-  select(-contains("Margin of Error"))
-
-#keeps population total row
-acs_marital_ham1 <- acs_marital_ham[1, ]
-
-acs_marital_ham1 <- acs_marital_ham1 %>% 
-  pivot_longer(cols = starts_with("Census Tract"), 
-               names_to = "NAME")
-
-#filters out columns with Tennessee total estimate based on name variable
-acs_marital_ham1 <- acs_marital_ham1 %>% filter(!grepl("Tennessee!!Total!!Estimate",NAME))
-
-#creates censustract column and varname column used for pivoting wider
-acs_marital_ham1 <- acs_marital_ham1 %>%
-  mutate(censustract=(gsub("!!.*","",NAME)),
-         varname=(gsub(".*Tennessee!!","",NAME)),
-         varname=(gsub("!!Estimate.*", "", varname)))
-
-#pivots wider with varname and value column
-acs_marital_ham2 <- acs_marital_ham1 %>% select(-`Label (Grouping)`,-NAME) %>% 
-  pivot_wider(names_from=varname,values_from=value)
-
-#merges marital dataset with hamilton tract by name and censustract variables.
-hamilton_tract <- hamilton_tract %>% 
-  left_join(acs_marital_ham2, by = c("NAME" = "censustract"))
