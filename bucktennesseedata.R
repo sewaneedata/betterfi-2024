@@ -263,7 +263,6 @@ tn_tract <- tn_tract %>%
 
 ####
 
-
 #load education data
 tn_edu <- read_csv("data/education_level.csv")
 #tn_edu_meta <- read_csv("data/tn-Education-Column-Metadata.csv")
@@ -651,10 +650,51 @@ acs_edu_tn <- acs_edu_tn  %>%
 
 #pivots wider with varname and value column
 acs_edu_tn  <- acs_edu_tn  %>% select(-NAME) %>% 
-  pivot_wider(names_from= `Label (Grouping)` ,values_from=value)
+  pivot_wider(names_from= `Label (Grouping)` ,values_from=value) %>% 
+  select(-"varname") 
+
+names(acs_edu_tn) <- str_replace_all(names(acs_edu_tn), "\\s", "")
 
 #rename columns
-names(acs())
+names(acs_edu_tn) <- c(
+                         "NAME", #"censustract", 
+                         "18total", #"Population18to24years", 
+                         "18NOhighschool", #"Lessthanhighschoolgraduate", 
+                         "25total", #"Population25yearsandover", 
+                         "25NO9th", #"Lessthan9thgrade", 
+                         "25NOhighschool" #"9thto12thgradenodiploma"
+)
+#remove commas
+acs_edu_tn$`25total` <- gsub(",", "", acs_edu_tn$`25total`)
+acs_edu_tn$`18total` <- gsub(",", "", acs_edu_tn$`18total`)
+acs_edu_tn$`18NOhighschool` <- gsub(",", "", acs_edu_tn$`18NOhighschool`)
+acs_edu_tn$`25NOhighschool` <- gsub(",", "", acs_edu_tn$`25NOhighschool`)
+acs_edu_tn$`25NO9th` <- gsub(",", "", acs_edu_tn$`25NO9th`)
+#convert character string to numeric
+acs_edu_tn <- acs_edu_tn %>% 
+  mutate(`18NOhighschool` = as.numeric(`18NOhighschool`)) %>% 
+  mutate(`18total` = as.numeric(`18total`)) %>% 
+  mutate(`25NO9th` = as.numeric(`25NO9th`)) %>% 
+  mutate(`25NOhighschool` = as.numeric(`25NOhighschool`)) %>% 
+  mutate(`25total` = as.numeric(`25total`)) 
+
+#mutate columns for 18 and 25 than HAVE GRADUATED HIGHSCHOOL
+acs_edu_tn <-acs_edu_tn %>% 
+  mutate(`18highschool` = `18total` - `18NOhighschool`) %>% 
+  mutate(`25highschool` = `25total` - `25NOhighschool` - `25NO9th`)
+
+
+#mutate column for total pop and total highschool graduation pop
+acs_edu_tn <- acs_edu_tn %>% 
+  mutate(total_pop = `18total` + `25total`) %>% 
+  mutate(total_highschool_pop = `25highschool` + `18highschool`)
+
+acs_edu_tn <- acs_edu_tn %>% 
+  mutate(total_percent_highschool = (total_highschool_pop/total_pop)*100) 
+
+acs_edu_tn <- acs_edu_tn %>% 
+  select("NAME", "total_percent_highschool")
+
 #merges marital dataset with tn tract by name and censustract variables.
 tn_tract <- tn_tract %>% 
   left_join(acs_marital_tn2, by = c("NAME" = "censustract"))
