@@ -216,3 +216,9 @@ title_lender_count <- title_info %>%
   tally() %>%
   mutate(percentage = n/428*100) 
 
+payday_lender_count <- payday_info %>% 
+  group_by(`Company Name`) %>%
+  tally() %>%
+  mutate(percentage = n/554*100) 
+
+
