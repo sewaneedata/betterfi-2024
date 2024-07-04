@@ -205,7 +205,7 @@ ACS_employment_hamilton$NAME <- gsub(",", ";", ACS_employment_hamilton$NAME)
 hamilton_tract <- hamilton_tract %>% 
   left_join(ACS_employment_hamilton, by = "NAME")
 
-hamilton_tract$percent_employed <- gsub(",", "", hamilton_tract$percent_employed )
+
 
 
 ##employment_cleaning1$employed<-sub('%', '', employment_cleaning1$employed)

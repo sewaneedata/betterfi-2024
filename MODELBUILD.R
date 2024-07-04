@@ -42,15 +42,19 @@ varlist_lenders <- hamilton_tract %>%
   replace_na(list(n_lenders = 0)) %>% 
   mutate(max_lender = max(n_lenders)) %>% 
   mutate(vun_lender = n_lenders/max_lender) %>% 
-  arrange(desc(vun_lender))
+  arrange(desc(vun_lender)) %>% 
+  select("NAME", "vun_lender") %>% 
+  st_drop_geometry()
 
 #avg_income
 varlist_income <- hamilton_tract %>% 
   select("NAME", "avg_income") %>% 
   replace_na(list(avg_income = 0)) %>% 
-  arrange(avg_income) %>% 
   filter(avg_income != 0) %>%
-  mutate( income_percentile = row_number() / n() )
+  arrange(avg_income) %>% 
+  mutate(vun_income = avg_income/max(avg_income)) %>% 
+  mutate(vun_income = 1-vun_income) %>% 
+  mutate(vun_income = vun_income/max(vun_income))
 
 #percent_noncitizen (DONE)
 varlist_noncitizen <- hamilton_tract %>% 
@@ -111,5 +115,69 @@ varlist_unemployment <- hamilton_tract %>%
   drop_na(percent_unemployed) %>% 
   mutate(vun_unemployed = percent_unemployed/max(percent_unemployed)) %>% 
   arrange(desc(vun_unemployed))
+
+#black_percent
+varlist_black <- hamilton_tract %>% 
+  select("NAME", "percent_black") %>% 
+  drop_na(percent_black) %>% 
+  mutate(vun_black = percent_black/max(percent_black)) %>% 
+  arrange(desc(vun_black))
+
+#hispaniclat_percent
+varlist_hispaniclat <- hamilton_tract %>% 
+  select("NAME", "percent_hispaniclat") %>% 
+  drop_na(percent_hispaniclat) %>%
+  mutate(vun_hispaniclat = percent_hispaniclat/max(percent_hispaniclat)) %>% 
+  arrange(desc(vun_hispaniclat))
+
+
+#ASSIGN MODEL WEIGHTS
+#for first iteration assign 10% to each weight
+weight_lender <- 0.1
+weight_income <- 0.1
+weight_noncitizen <- 0.1
+weight_highschool <- 0.1
+weight_veteran <- 0.1
+weight_mediangrossrent <- 0.1
+weight_divorced <- 0.1
+weight_unemployed<- 0.1
+weight_black <- 0.1
+weight_hispaniclat <- 0.1
+
+#CREATE DATAFRAM WITH ALL VUN SCORES
+varlist_vun <- varlist_lenders %>% 
+  left_join(varlist_income <- st_drop_geometry(varlist_income) %>% select("NAME", "vun_income"), by = "NAME") %>% 
+  left_join(varlist_noncitizen <- st_drop_geometry(varlist_noncitizen) %>% select("NAME", "vun_noncitizen"), by = "NAME") %>% 
+  left_join(varlist_highschool <- st_drop_geometry(varlist_highschool) %>% select("NAME", "vun_highschool"), by = "NAME") %>% 
+  left_join(varlist_veteran <- st_drop_geometry(varlist_veteran) %>% select("NAME", "vun_veteran"), by = "NAME") %>% 
+  left_join(varlist_mediangrossrent <- st_drop_geometry(varlist_mediangrossrent) %>% select("NAME", "vun_mediangrossrent"), by = "NAME") %>% 
+  left_join(varlist_divorced <- st_drop_geometry(varlist_divorced) %>% select("NAME", "vun_divorced"), by = "NAME") %>% 
+  left_join(varlist_unemployment <- st_drop_geometry(varlist_unemployment) %>% select("NAME", "vun_unemployed"), by = "NAME") %>%
+  left_join(varlist_black <- st_drop_geometry(varlist_black) %>% select("NAME", "vun_black"), by = "NAME") %>%
+  left_join(varlist_hispaniclat <- st_drop_geometry(varlist_hispaniclat) %>% select("NAME", "vun_hispaniclat"), by = "NAME") 
+
+
+#calculate avg_vun score
+varlist_vun <- varlist_vun %>% 
+  mutate(weighted_vun = ((vun_lender)*(weight_lender)) + 
+           ((vun_income)*(weight_income)) +
+           ((vun_lender)*(weight_lender)) +
+           ((vun_noncitizen)*(weight_noncitizen)) +
+           ((vun_highschool)*(weight_highschool)) +
+           ((vun_veteran)*(weight_veteran)) +
+           ((vun_mediangrossrent)*(weight_mediangrossrent)) +
+           ((vun_divorced)*(weight_divorced)) +
+           ((vun_unemployed)*(weight_unemployed)) +
+           ((vun_black)*(weight_black)) +
+           ((vun_hispaniclat)*(weight_hispaniclat)) 
+         ) %>% 
+  drop_na(weighted_vun) %>% 
+  arrange(desc(weighted_vun))
+
+tract_vun_ranking <- varlist_vun %>% 
+  select("NAME", "weighted_vun") %>% 
+  arrange(desc(weighted_vun))
+
+  
 
 #-------------------------------------------------------------------------------#
