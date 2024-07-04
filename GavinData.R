@@ -210,3 +210,9 @@ flex_lender_count <- flex_info %>%
   tally() %>%
   mutate(percentage = n/603*100) 
 
+#Same as above for title
+title_lender_count <- title_info %>% 
+  group_by(`Company Name`) %>%
+  tally() %>%
+  mutate(percentage = n/428*100) 
+
