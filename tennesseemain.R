@@ -1,3 +1,6 @@
+# The goal of this file is to generate a mappable polygon as well as our tn_tract  which is our main data file
+# for both our model and dashboard
+
 #libraries
 library(tidycensus)
 library(tidyverse)
@@ -135,7 +138,7 @@ Sys.setenv("VROOM_CONNECTION_SIZE"=5000000)
 #### Total Population Dataset
 
 #load total pop data
-tn_pop <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_totalpop_tn.csv")
+tn_pop <- read_csv("data/tennessee/acs_totalpop_tn.csv")
 
 
 #clean pop data
@@ -165,7 +168,7 @@ tn_tract <- tn_tract %>%
 #create average income for each census tract
 #Get ACS Income Data for Income
 #Just tn County
-acs_income_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_income_tn.csv")
+acs_income_tn <- read_csv("data/tennessee/acs_income_tn.csv")
 acs_income_tn <- acs_income_tn %>% 
   select(-contains("Margin of Error")) %>% 
   select(contains("Household")) %>% 
@@ -219,7 +222,7 @@ tm_shape(tn_tract)+
 #### Citizenship and Nativity Dataset
 
 #load citizen data
-acs_citizen_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_citizenship_tn.csv")
+acs_citizen_tn <- read_csv("data/tennessee/acs_citizenship_tn.csv")
 
 
 #clean citizen data and names
@@ -343,7 +346,7 @@ tn_tract <- tn_tract %>%
 #### Marital Status Dataset
 
 #load marital data
-acs_marital_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_marital_tn.csv") 
+acs_marital_tn <- read_csv("data/tennessee/acs_marital_tn.csv") 
 
 
 #removes columns with margins of error
@@ -386,7 +389,7 @@ tn_tract <- tn_tract %>%
 #### Veteran Status Dataset
 
 #load veteran data
-acs_veteran_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_veteran_tn.csv")
+acs_veteran_tn <- read_csv("data/tennessee/acs_veteran_tn.csv")
 
 
 #keep only the first row
@@ -418,7 +421,7 @@ tn_tract <- tn_tract %>%
 #### Median Gross Rent Dataset
 
 #loads median gross rent
-acs_gross_rent_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_grossrent_tn.csv")
+acs_gross_rent_tn <- read_csv("data/tennessee/acs_grossrent_tn.csv")
 
 #clears margins of error columns
 acs_gross_rent_tn <- acs_gross_rent_tn %>% 
@@ -504,7 +507,7 @@ tm_shape(tn_tract) +
 #### Race Dataset
 
 #load race data
-acs_race_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_detailedrace_tn.csv")#reads race info csv
+acs_race_tn <- read_csv("data/tennessee/acs_detailedrace_tn.csv")#reads race info csv
 
 
 #This line removes margin of error column
@@ -594,7 +597,7 @@ tn_tract <- tn_tract %>%
 
 
 #reads csv for hispanic or latino individuals in tn county
-acs_hl_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_hispaniclatino_tn.csv") 
+acs_hl_tn <- read_csv("data/tennessee/acs_hispaniclatino_tn.csv") 
 
 
 #removes margin of error column
@@ -642,7 +645,7 @@ tn_tract <- tn_tract %>%
 
 ##### Employment Data next
 
-acs_emp_tn <- read_csv("D:/kyle_datalab/betterfi-2024/data/tennessee/acs_employment_tn.csv")
+acs_emp_tn <- read_csv("data/tennessee/acs_employment_tn.csv")
 
 
 #removes columns with margins of error
