@@ -179,11 +179,13 @@ load("data/tennessee/tn_data.RData")
 
 tn_tract <- tn_tract %>% 
   rename(Unemployed = "unemployedpercent") %>% 
-  mutate(county = str_extract(NAME, "(?<=;)[^;]+(?=;)")) %>% 
-  mutate(county = str_replace_all(county, "County", ""))
-  
-tn_tract$county <- gsub(" ", "", tn_tract$county)
+  mutate(county = str_extract(NAME, "(?<=;)[^;]+(?=;)")) 
+# %>%
+#   mutate(county = str_replace_all(county, "County", ""))
 
+# tn_tract$county <- gsub(" ", "", tn_tract$county)
+
+save(tn_tract, file="data/tennessee/tn_data.RData")
 
 #CREATE VARIABLE BUCKETS
 
@@ -330,6 +332,8 @@ tract_vun_ranking_tn <- varlist_vun %>%
   arrange(desc(weighted_vun))
 
 view(tract_vun_ranking_tn)
+
+
 
 #-------------------------------------------------------------------------------#
 
