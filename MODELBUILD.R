@@ -175,20 +175,34 @@ view(tract_vun_ranking_hamilton)
 load("data/tennessee/tn_data.RData")
 #-----------------------------MODEL.BUILD.ITTERATION.TN-------------------------#
 
+#formate column names and create county column for organization
+
 tn_tract <- tn_tract %>% 
   rename(Unemployed = "unemployedpercent") %>% 
+  mutate(county = str_extract(NAME, "(?<=;)[^;]+(?=;)")) %>% 
+  mutate(county = str_replace_all(county, "County", ""))
   
+tn_tract$county <- gsub(" ", "", tn_tract$county)
+
+# #run to check how many tracts there are per county
+# tn_counties <- tn_tract %>% 
+#   group_by(county) %>% 
+#   tally()
+
+#SELECT COUNTY/COUNTIES YOU WANT TO OBSERVE
+# tn_tract <- tn_tract %>%
+#   filter(county == "")
 
 #CREATE VARIABLE BUCKETS
 
 #n_lenders (DONE)
 varlist_lenders <- tn_tract %>% 
-  select("NAME", "n_lenders") %>% 
+  select("NAME", "n_lenders", "county") %>% 
   replace_na(list(n_lenders = 0)) %>% 
   mutate(max_lender = max(n_lenders)) %>% 
   mutate(vun_lender = n_lenders/max_lender) %>% 
   arrange(desc(vun_lender)) %>% 
-  select("NAME", "vun_lender") %>% 
+  select("NAME", "vun_lender", "county") %>% 
   st_drop_geometry()
 
 #avg_income
@@ -320,7 +334,7 @@ varlist_vun <- varlist_vun %>%
   arrange(desc(weighted_vun))
 
 tract_vun_ranking_tn <- varlist_vun %>% 
-  select("NAME", "weighted_vun") %>% 
+  select("NAME", "weighted_vun", "county") %>% 
   arrange(desc(weighted_vun))
 
 view(tract_vun_ranking_tn)
