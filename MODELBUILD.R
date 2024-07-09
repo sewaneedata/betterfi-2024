@@ -180,12 +180,12 @@ load("data/tennessee/tn_data.RData")
 #formate column names and create county column for organization
 
 tn_tract <- tn_tract %>% 
-  rename(Unemployed = "unemployedpercent") %>% 
+  # rename(Unemployed = "unemployedpercent") %>% 
   mutate(county = str_extract(NAME, "(?<=;)[^;]+(?=;)")) 
 # %>%
 #   mutate(county = str_replace_all(county, "County", ""))
 
-# tn_tract$county <- gsub(" ", "", tn_tract$county)
+tn_tract$county <- gsub(" ", "", tn_tract$county)
 
 save(tn_tract, file="data/tennessee/tn_data.RData")
 
