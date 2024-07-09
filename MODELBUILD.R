@@ -151,7 +151,6 @@ varlist_vun <- varlist_lenders %>%
 varlist_vun <- varlist_vun %>% 
   mutate(weighted_vun = ((vun_lender)*(weight_lender)) + 
            ((vun_income)*(weight_income)) +
-           ((vun_lender)*(weight_lender)) +
            ((vun_noncitizen)*(weight_noncitizen)) +
            ((vun_highschool)*(weight_highschool)) +
            ((vun_veteran)*(weight_veteran)) +
@@ -316,7 +315,6 @@ varlist_vun <- varlist_lenders %>%
 varlist_vun <- varlist_vun %>% 
   mutate(weighted_vun = ((vun_lender)*(weight_lender)) + 
            ((vun_income)*(weight_income)) +
-           ((vun_lender)*(weight_lender)) +
            ((vun_noncitizen)*(weight_noncitizen)) +
            ((vun_highschool)*(weight_highschool)) +
            ((vun_veteran)*(weight_veteran)) +
