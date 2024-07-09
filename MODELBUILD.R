@@ -339,7 +339,8 @@ view(tract_vun_ranking_tn)
 
 #-------------------------------------------------------------------------------#
 
+#tn_tract2 <- tn_tract %>% 
+tn_tract2 <- tn_tract %>% 
+  left_join(tract_vun_ranking_tn, by = "NAME")
 
-
-
-
+tn_tract2 <- tn_tract2 %>% select(c("NAME","weighted_vun","Divorced","n_lenders","total_population","avg_income_group","percent_noncitizen","total_percent_highschool","percent_veteran","percent_black","percent_hispaniclat","Unemployed","geometry","County"))

@@ -146,5 +146,28 @@ tm_shape(hamilton_tract)+
 
 ggplot(data=tn_tract,aes(x=Divorced,y=n_lenders,color=))+geom_col()
 
-tm_shape(hamilton_tract)+
-  tm_polygons()
+#create income level groups
+tn_tract2 <- tn_tract2 %>% 
+  mutate(percent_black = ifelse(percent_black == '-', NA, percent_black)) %>% 
+  mutate(percent_black = as.numeric(percent_black)) %>% 
+  mutate(percent_black_group = case_when(
+    percent_black < 10 ~ "<10%",
+    percent_black >= 10.001 & percent_black < 20 ~ "10-20%",
+    percent_black >= 20.001 & percent_black < 30 ~ "20-30%",
+    percent_black >= 30.001 & percent_black < 40 ~ "30-40%",
+    percent_black >= 40.001 & percent_black < 50 ~ "40-50%",
+    percent_black >= 50.001 & percent_black < 60 ~ "50-60%",
+    percent_black >= 60.001 & percent_black < 70 ~ "60-70%",
+    percent_black >= 70.001 & percent_black < 80 ~ "70-80%",
+    percent_black >= 80.001 & percent_black < 90 ~ "80-90%",
+    percent_black > 90.001 ~ ">90%",
+    TRUE~NA
+  ) ) %>% 
+  mutate(percent_black_group=fct_reorder(factor(percent_black_group), percent_black, .na_rm = TRUE))#factor reorder for viewing ease, so that the key is ordered from lowest to highest
+
+tn_tract2 <- tn_tract2 %>%
+  filter(county.x == "HamiltonCounty")
+
+#create chloropleth for income
+tm_shape(tn_tract2)+
+  tm_polygons( col = "percent_black_group", id="NAME", palette = "Reds")
