@@ -686,7 +686,7 @@ names(hamilton_tract) <- str_replace_all(names(hamilton_tract), "\\s", "")
 
 
 #write RData for hamilton tract (main working dataframe)
-save(hamilton_tract, file="data/hamilton_data.RData")
+#save(hamilton_tract, file="data/hamilton_data.RData")
 
 
 #add Company Name to Hamilton Lenders Dataframe

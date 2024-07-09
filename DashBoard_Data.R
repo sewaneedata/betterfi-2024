@@ -131,11 +131,13 @@ tn_tract_dash <- tn_tract_dash %>%
   
 
 #TEST MAP
-
 tmap_mode("view")
 tm_shape(tn_tract_dash %>% filter(county == "ShelbyCounty"))+
-  tm_polygons(col = "mediangrossrent_group", palette = "YlOrRd")
+  tm_polygons(col = "geometry", palette = "YlOrRd")
 
+#SAVE DASHBOARD DATA
+
+save(tn_tract_dash, file = "data/tennessee/tn_tract_dash.RData")
 
   
   
