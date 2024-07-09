@@ -171,3 +171,95 @@ tn_tract2 <- tn_tract2 %>%
 #create chloropleth for income
 tm_shape(tn_tract2)+
   tm_polygons( col = "percent_black_group", id="NAME", palette = "Reds")
+
+##################################################################################
+
+#load geography information
+counties_tract <- get_acs(geography = "tract",
+                    state = "TN",
+                    variables = "B01003_001",
+                    county = c("Hamilton","Rutherford"),
+                    year = 2022,
+                    geometry = TRUE)
+
+
+#create tn Polygon
+tn_poly <- st_union(tn_tract$geometry)
+
+tm_shape(tn_poly)+
+  tm_polygons()
+
+counties_tract <- counties_tract %>% 
+  # rename(Unemployed = "unemployedpercent") %>% 
+  mutate(county = str_extract(NAME, "(?<=;)[^;]+(?=;)")) 
+# %>%
+#   mutate(county = str_replace_all(county, "County", ""))
+
+#counties_tract$county <- gsub(" ", "", counties_tract$county)
+
+save(counties_tract, file="data/tennessee/tn_data.RData")
+
+#map for tn census tracts
+tmap_mode("plot")
+#tm_shape(tn_poly)+
+tm_shape(counties_tract)+
+  tm_polygons(col='county')
+
+tm_shape(tn_poly) + 
+  tm_polygons(border.col = "black") +       # Base layer with black borders
+  tm_shape(counties_tract) + 
+  tm_polygons(col="county",          # Overlay layer with grey borders
+              alpha = 0.7) +                # Transparency level for overlay
+  tm_layout(legend.position = c("left", "bottom"))
+
+
+#create tn Polygon
+counties_poly <- st_union(counties_tract$geometry)
+
+tm_shape(counties_poly)+
+  tm_polygons()
+
+
+#check which points are in tn_polygon
+points <- total_lender_info$pnt
+
+st_crs(counties_poly) <- st_crs(points)
+
+tn_lenders <- total_lender_info %>% 
+  mutate(Contained = ifelse(st_within(points, counties_poly), "Yes", "Not")) %>% 
+  filter(Contained == "Yes")
+
+#create map for tn county lenders overlayed on tn county limits
+tmap_mode("view")
+
+tm_shape(tn_lenders)+ 
+  tm_dots()+
+  tm_shape(tn_tract)+
+  tm_polygons(alpha = 0.5)
+
+#count lenders in each census tract
+st_crs(tn_tract$geometry) <- st_crs(tn_lenders$pnt)
+# find which census tract contains each lender
+m <- st_intersects( tn_lenders$pnt, tn_tract, sparse=FALSE )
+# idx provides the row of the census tract for the given lender
+idx <- apply(m, 1, which)
+# now get the corresponding census tract names 
+tn_lenders$tract <- tn_tract$NAME[idx]
+
+#create dataset for lenders per tract
+lenders_per_tract <- tn_lenders %>% 
+  st_drop_geometry() %>%
+  group_by( tract ) %>% 
+  tally( name = "n_lenders") %>%
+  arrange( desc(n_lenders) )
+
+#left join lender_per_tract to tn geometry dataset
+tn_tract <- left_join( tn_tract, lenders_per_tract %>% rename( NAME = tract ), by = "NAME" )
+
+#create lender heat map
+tm_shape( tn_tract ) + tm_polygons( col="n_lenders", id = "NAME")
+
+#makes it so you can open our large tn state datasets
+Sys.setenv("VROOM_CONNECTION_SIZE"=5000000)
+
+
