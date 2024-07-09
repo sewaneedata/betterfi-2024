@@ -17,9 +17,6 @@ library(rnaturalearthhires)
 library(sf)
 library(tidygeocoder)
 library(mapsapi)
-library(googledrive)
-
-
 
 #set working directory
 # setwd("/Users/buchananlindsey/Desktop/buck_datalab/betterfi-2024/data")
@@ -59,71 +56,81 @@ total_info <- total_info %>%
     TRUE ~ NA_character_))
 
 
+#Convert addresses into dataframe
+#coord_data_total <- mp_geocode(addresses = total_info$full_address, key = "AIzaSyAaG4e9IKfLvQBEbyUMY2ko-02UjFHe1LQ")
+
+#add coordinate data to master data file
+#  total_lender_info <-  mp_get_points(coord_data_total)
+
+#save new data for coordinates
+# save(total_lender_info, file="total_lender_info.RData")
+
 #load coordinate data for all lenders
 load("data/total_lender_info.RData") 
 
 
 #load geography information
-tn_tract <- get_acs(geography = "tract",
+hamilton_tract <- get_acs(geography = "tract",
                      state = "TN",
                      variables = "B01003_001",
+                     county = "Hamilton",
                      year = 2022,
                      geometry = TRUE)
 
 
-#map for tn census tracts
+#map for hamilton census tracts
 tmap_mode("view")
-tm_shape(tn_tract)+
+tm_shape(hamilton_tract)+
   tm_polygons()
 
 
-#create tn Polygon
-tn_poly <- st_union(tn_tract$geometry)
+#create hamilton Polygon
+hamilton_poly <- st_union(hamilton_tract$geometry)
 
-tm_shape(tn_poly)+
+tm_shape(hamilton_poly)+
   tm_polygons()
 
 
-#check which points are in tn_polygon
+#check which points are in hamilton_polygon
 points <- total_lender_info$pnt
 
-st_crs(tn_poly) <- st_crs(points)
+st_crs(hamilton_poly) <- st_crs(points)
 
-tn_lenders <- total_lender_info %>% 
-  mutate(Contained = ifelse(st_within(points, tn_poly), "Yes", "Not")) %>% 
+hamilton_lenders <- total_lender_info %>% 
+  mutate(Contained = ifelse(st_within(points, hamilton_poly), "Yes", "Not")) %>% 
   filter(Contained == "Yes")
 
-#create map for tn county lenders overlayed on tn county limits
+#create map for hamilton county lenders overlayed on hamilton county limits
 tmap_mode("view")
 
-tm_shape(tn_lenders)+ 
+tm_shape(hamilton_lenders)+ 
   tm_dots()+
-  tm_shape(tn_tract)+
+  tm_shape(hamilton_tract)+
   tm_polygons(alpha = 0.5)
 
 #count lenders in each census tract
-st_crs(tn_tract$geometry) <- st_crs(tn_lenders$pnt)
+st_crs(hamilton_tract$geometry) <- st_crs(hamilton_lenders$pnt)
 # find which census tract contains each lender
-m <- st_intersects( tn_lenders$pnt, tn_tract, sparse=FALSE )
+m <- st_intersects( hamilton_lenders$pnt, hamilton_tract, sparse=FALSE )
 # idx provides the row of the census tract for the given lender
 idx <- apply(m, 1, which)
 # now get the corresponding census tract names 
-tn_lenders$tract <- tn_tract$NAME[idx]
+hamilton_lenders$tract <- hamilton_tract$NAME[idx]
 
 #create dataset for lenders per tract
-lenders_per_tract <- tn_lenders %>% 
+lenders_per_tract <- hamilton_lenders %>% 
   st_drop_geometry() %>%
   group_by( tract ) %>% 
   tally( name = "n_lenders") %>%
   arrange( desc(n_lenders) )
 
-#left join lender_per_tract to tn geometry dataset
-tn_tract <- left_join( tn_tract, lenders_per_tract %>% rename( NAME = tract ), by = "NAME" )
+#left join lender_per_tract to hamilton geometry dataset
+hamilton_tract <- left_join( hamilton_tract, lenders_per_tract %>% rename( NAME = tract ), by = "NAME" )
 
 #create lender heat map
-tm_shape( tn_tract ) + tm_polygons( col="n_lenders", id = "NAME")
+tm_shape( hamilton_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 
-#makes it so you can open our large tn state datasets
+#makes it so you can open our large hamilton state datasets
 Sys.setenv("VROOM_CONNECTION_SIZE"=5000000)
 
 
@@ -132,7 +139,7 @@ Sys.setenv("VROOM_CONNECTION_SIZE"=5000000)
 #### Total Population Dataset
 
 #load total pop data
-tn_pop <- read_csv("data/tennessee/acs_totalpop_tn.csv")
+hamilton_pop <- read_csv("D:\kyle_datalab\betterfi-2024/data/hamilton/acshamiltonpop.csv")
 
 
 #clean pop data
@@ -145,12 +152,12 @@ tn_pop <- tn_pop %>%
 
 
 #match tract names with tn_tract
-tn_pop$NAME <-  gsub("!.*", "", tn_pop$NAME)#removing text starting with exclamation mark
-tn_pop$NAME <- gsub(",", ";", tn_pop$NAME) #replaces commas with a semicolon
-tn_pop <- tn_pop %>% select(NAME,total_population) #keeps only name and total population column
+tn_pop$NAME <-  gsub("!.*", "", tn_pop$NAME)
+tn_pop$NAME <- gsub(",", ";", tn_pop$NAME)
+tn_pop <- tn_pop %>% select(NAME,total_population)
 
 
-#left_join population data to tn_tract
+#left_join pop data to tn_tract
 tn_tract <- tn_tract %>% 
   left_join(tn_pop, by = "NAME") 
 
@@ -158,17 +165,15 @@ tn_tract <- tn_tract %>%
 
 
 #### ACS Income Dataset
-# American Community Survey 
-# preparing dataset for merging
 
-# create average income for each census tract
-# Get ACS Income Data for Income
-
+#create average income for each census tract
+#Get ACS Income Data for Income
+#Just tn County
 acs_income_tn <- read_csv("data/tennessee/acs_income_tn.csv")
 acs_income_tn <- acs_income_tn %>% 
   select(-contains("Margin of Error")) %>% 
   select(contains("Household")) %>% 
-  select(-contains("Nonfamily")) #removes columns with margin of error and nonfamily, keeping only the household income data
+  select(-contains("Nonfamily")) 
 
 
 #Select just Average Income, Pivot Longer to have just one row per census tract
@@ -178,8 +183,8 @@ acs_income_tn <- acs_income_tn %>%
 
 
 #change census names to match "tn_tract"
-acs_income_tn$NAME <-  gsub("!.*", "", acs_income_tn$NAME) #removing text starting w exclamation mark
-acs_income_tn$NAME <- gsub(",", ";", acs_income_tn$NAME) #replaces commas w semicolon
+acs_income_tn$NAME <-  gsub("!.*", "", acs_income_tn$NAME)
+acs_income_tn$NAME <- gsub(",", ";", acs_income_tn$NAME)
 
 
 #join avg_income to tn_tract
@@ -205,7 +210,7 @@ tn_tract<- tn_tract %>%
     avg_income > 190000 ~ ">190k",
     TRUE~NA
   ) ) %>% 
-  mutate(avg_income_group=fct_reorder(factor(avg_income_group), avg_income, .na_rm = TRUE))#factor reorder for viewing ease, so that the key is ordered from lowest to highest
+  mutate(avg_income_group=fct_reorder(factor(avg_income_group), avg_income, .na_rm = TRUE))#factor reorder for viewing ease
 
 
 #create chloropleth for income
@@ -247,7 +252,7 @@ acs_noncitizen_tn$NAME <- gsub(",", ";", acs_noncitizen_tn$NAME)
 acs_noncitizen_tn <- acs_noncitizen_tn %>% select(NAME,noncitizens)
 
 
-#merging citizen and noncitizen data to main tn_tract dataset
+#left join 
 tn_tract <- tn_tract %>% 
   left_join(acs_citizen_tn1, by = "NAME")
 tn_tract <- tn_tract %>% 
@@ -259,7 +264,7 @@ tn_tract <- tn_tract %>%
   mutate(percent_citizen = (citizens/total_population)*100) %>% 
   mutate(percent_noncitizen = (noncitizens/total_population)*100)%>% 
   select(-"citizens") %>% 
-  select(-"noncitizens") #creates citizen and noncitizen percent columns 
+  select(-"noncitizens")
 
 
 
@@ -268,7 +273,6 @@ tn_tract <- tn_tract %>%
 
 #load education csv
 acs_edu_tn <- read_csv("data/tennessee/acs_edu_tn.csv")
-
 
 #removes margin of error column
 acs_edu_tn <- acs_edu_tn %>% select("Label (Grouping)", contains("Total!!Estimate"))
@@ -280,13 +284,11 @@ acs_edu_tn <- acs_edu_tn[edu_rows, ]
 acs_edu_tn <- acs_edu_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME") 
 
-
 #creates censustract column and varname column used for pivoting wider
 acs_edu_tn <- acs_edu_tn  %>%
   mutate(censustract=(gsub("!!.*","",NAME)),
          varname=(gsub(".*Tennessee!!","",NAME)),
          varname=(gsub("!!Estimate.*", "", varname)))
-
 
 #pivots wider with varname and value column
 acs_edu_tn  <- acs_edu_tn  %>% select(-NAME) %>% 
@@ -294,7 +296,6 @@ acs_edu_tn  <- acs_edu_tn  %>% select(-NAME) %>%
   select(-"varname") 
 
 names(acs_edu_tn) <- str_replace_all(names(acs_edu_tn), "\\s", "")
-
 
 #rename columns
 names(acs_edu_tn) <- c(
@@ -304,17 +305,13 @@ names(acs_edu_tn) <- c(
   "25total", #"Population25yearsandover", 
   "25NO9th", #"Lessthan9thgrade", 
   "25NOhighschool" #"9thto12thgradenodiploma"
-  )
-
-
+)
 #remove commas
 acs_edu_tn$`25total` <- gsub(",", "", acs_edu_tn$`25total`)
 acs_edu_tn$`18total` <- gsub(",", "", acs_edu_tn$`18total`)
 acs_edu_tn$`18NOhighschool` <- gsub(",", "", acs_edu_tn$`18NOhighschool`)
 acs_edu_tn$`25NOhighschool` <- gsub(",", "", acs_edu_tn$`25NOhighschool`)
 acs_edu_tn$`25NO9th` <- gsub(",", "", acs_edu_tn$`25NO9th`)
-
-
 #convert character string to numeric
 acs_edu_tn <- acs_edu_tn %>% 
   mutate(`18NOhighschool` = as.numeric(`18NOhighschool`)) %>% 
@@ -322,7 +319,6 @@ acs_edu_tn <- acs_edu_tn %>%
   mutate(`25NO9th` = as.numeric(`25NO9th`)) %>% 
   mutate(`25NOhighschool` = as.numeric(`25NOhighschool`)) %>% 
   mutate(`25total` = as.numeric(`25total`)) 
-
 
 #mutate columns for 18 and 25 than HAVE GRADUATED HIGHSCHOOL
 acs_edu_tn <-acs_edu_tn %>% 
@@ -341,8 +337,7 @@ acs_edu_tn <- acs_edu_tn %>%
 acs_edu_tn <- acs_edu_tn %>% 
   select("NAME", "total_percent_highschool")
 
-
-#merges educational dataset with tn tract by name and censustract variables.
+#merges marital dataset with tn tract by name and censustract variables.
 tn_tract <- tn_tract %>% 
   left_join(acs_edu_tn, by = "NAME")
 
@@ -741,4 +736,3 @@ save(tn_tract, file="tn_data.RData")
 # 
 # #------------------------------------------------------------------------------#
 
-ggplot(data=tn_tract,aes(x=))
