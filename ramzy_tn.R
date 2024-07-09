@@ -32,11 +32,13 @@ tn_unemployed <- tn_employment[6, ]
 
 tn_employed<- tn_employed %>% 
   pivot_longer(cols=starts_with("Census Tract"), names_to = "NAME", values_to = "employed_tn") %>% 
-  select()
+  filter()
 
 
-  
-  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "tn_employment") 
+
+
+tn_unemployed<- tn_unemployed
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "unemployed_tn") 
 
 #change census names to match "hamilton_tract"
 ACS_income_hamilton$NAME <-  gsub("!.*", "", ACS_income_hamilton$NAME)
