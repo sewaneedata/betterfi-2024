@@ -5,7 +5,6 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 # Find out more about building applications with Shiny here:
 #
 #    https://shiny.posit.co/
-#
 
 library(shiny)
 library(dplyr)
@@ -56,7 +55,12 @@ ui <- fluidPage(
              
     ),
     tabPanel("Interactive Maps",
-             h3("Here is our interactive map panel")
+             h3("Here is our interactive map panel"),
+             fluidRow(
+               column(3, "Set Map Parameters"),
+               column(9, "Map Output")
+             )
+             
     ),
     tabPanel("Interactive Vunerability Model",
              h3("Here is our interactive model panel")
@@ -102,7 +106,7 @@ server <- function(input, output) {
              aes_string(x = input$graph_xvar, y = input$graph_yvar ))+
         geom_point(aes(col = county))+
         #this add a linear model line of best fit
-        geom_smooth(method = "lm")
+        geom_smooth(method = "lm", se = FALSE)
     }
     
   })
