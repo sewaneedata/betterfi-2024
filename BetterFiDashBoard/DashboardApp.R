@@ -10,13 +10,20 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 library(shiny)
 library(dplyr)
 library(ggplot2)
+library(sf)
+
 
 load("../data/tennessee/tn_data.RData")
 
+#create variable groupings for maps
+tn_tract_vars <- tn_tract %>% 
+  select("NAME", "n_lenders", "avg_income", "percent_noncitizen", "total_percent_highschool", "percent_veteran", "mediangrossrent", "Divorced", "Unemployed", "percent_black", "percent_hispaniclat")
+
 #define important variables 
 county_names <- c('All', unique(as.character(tn_tract$county)))
-  
-  
+
+tn_vars <- c(as.character(names(tn_tract_vars %>% select(-"NAME"))))
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   
@@ -34,9 +41,16 @@ ui <- fluidPage(
                                   choices = county_names,
                                   multiple = TRUE,
                                   selected = 'All'
-                                  )),
-               column(9, "Graph Output")
-             )
+                      ),
+                      selectInput("graph_xvar", "Select X Variable",
+                                  choices = tn_vars,
+                                  selected = "n_lenders"),
+                      selectInput("graph_yvar", "Select X Variable",
+                                  choices = tn_vars[tn_vars != input$graph_xvar])
+               ),
+             ),
+             column(9, "Graph Output")
+             
     ),
     tabPanel("Interactive Maps",
              h3("Here is our interactive map panel")
@@ -51,20 +65,16 @@ ui <- fluidPage(
   )
 )
 
+
+
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
-  output$distPlot <- renderPlot({
-    # generate bins based on input$bins from ui.R
-    x    <- faithful[, 2]
-    bins <- seq(min(x), max(x), length.out = input$bins + 1)
-    
-    # draw the histogram with the specified number of bins
-    hist(x, breaks = bins, col = 'darkgray', border = 'white',
-         xlab = 'Waiting time to next eruption (in mins)',
-         main = 'Histogram of waiting times')
-  })
+  
+  
 }
+  
+
 
 # Run the application 
 shinyApp(ui = ui, server = server)

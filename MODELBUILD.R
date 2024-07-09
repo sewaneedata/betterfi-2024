@@ -1,3 +1,5 @@
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
 #libraries
 library(tidycensus)
 library(tidyverse)
