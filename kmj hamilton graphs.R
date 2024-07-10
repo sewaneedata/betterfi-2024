@@ -1,3 +1,5 @@
+#This file exists to make random assorted graphs, to be used in tandem with buckdata, kyledata, or tennesseemain in order to make graphs
+
 #libraries
 library(tidycensus)
 library(tidyverse)
@@ -177,9 +179,14 @@ ruth_tract <- ruth_tract %>%
   ) ) %>% 
   mutate(avg_income_group=fct_reorder(factor(avg_income_group), avg_income, .na_rm = TRUE))#factor reorder for viewing ease, so that the key is ordered from lowest to highest
 
-tmap_mode("plot")
+ruth_tract <- ruth_tract %>%
+  rename(`Average Income Level` = avg_income_group)
+
+#ruth_tract <- ruth_tract %>% rename(`Number of Lenders` = n_lenders)
+
+tmap_mode("view")
 tm_shape(ruth_tract)+
-  tm_polygons( col = "avg_income_group", id="NAME", palette = "Blues")+  tm_layout(legend.position = c("right", "bottom"))
+  tm_polygons( col = "Average Income Level", id="NAME", palette = "Blues")+  tm_layout(legend.position = c("right", "bottom"))
 
 ggplot(data=tn_tract,aes(x=Divorced,y=n_lenders,color=))+geom_col()
 

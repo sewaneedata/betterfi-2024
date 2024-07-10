@@ -210,10 +210,12 @@ hamilton_tract<- hamilton_tract %>%
   mutate(avg_income_group=fct_reorder(factor(avg_income_group), avg_income, .na_rm = TRUE))#factor reorder for viewing ease
 
 #create chloropleth for income
+
+hamilton_tract <- hamilton_tract %>%
+  rename(`Average Income Level` = avg_income_group)
+
 tm_shape(hamilton_tract)+
-  tm_polygons( col = "avg_income_group", id="NAME", palette = "Blues")
-
-
+  tm_polygons( col = "Average Income Level", id="NAME", palette = "Blues")+  tm_layout(legend.position = c("right", "bottom"))
 
 ####
 
