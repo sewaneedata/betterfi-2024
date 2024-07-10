@@ -1,11 +1,6 @@
 # setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    https://shiny.posit.co/
 
+#load necessary libraries:
 library(shiny)
 library(ggplot2)
 library(sf)
@@ -14,22 +9,36 @@ library(tmap)
 library(DT)
 library(tidyverse)
 
+#call Dashboard Data
 load("../data/tennessee/tn_tract_dash.RData")
 
-#create variable groupings for maps
-
 #define important variables 
+
+#creates a vector containing all unique county names, as well an option called All
 county_names <- c("All", sort(unique(as.character(tn_tract_dash$county))))
 
+#creates a vector containing all options for the maps panel of the dashboard
 map_options <- c("n_lenders", names(tn_tract_dash %>% select(contains("_group"))))
 map_options <- setdiff(map_options, "geometry")
 
+#creates a vector containing all the possible variables to be used in the 
+#graph panel of the dash board
 graph_vars <- c(as.character(names(tn_tract_dash %>% 
                                      select(!contains("_group"))%>% 
                                      select(-"NAME") %>%
                                      select(-"county"))))
 graph_vars <- setdiff(graph_vars, "geometry")
 
+
+#BETTERFI_MODEL=================================================================
+
+#the betterfi_model is a functions that takes county and values for all 
+#weights as inputs.
+#the model outputs a datatable containing all census tracts that contain NON-NA 
+#values for all selected variables included in the model.
+#it is EXTREMELY important that we exclude census tracts that are missing variables 
+#because the missing values would be counted as a Zero in the vulnerability score, 
+#which artifically makes the census tract appear "less vulnerable"
 
 betterfi_model <- function(counties, weight_lender, weight_income, weight_noncitizen,
                            weight_highschool, weight_veteran, weight_mediangrossrent,
@@ -38,6 +47,9 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
   
   # Creating a list of relevant variables to select based on whether or not the weight for the
   # variable is 0
+  #selected_vars is used just before the final vulnerability score calculation
+  #it is used ensure that any rows containing NAs are dropped before calculating 
+  #the relative vulnerability scores
   selected_vars <- c()
   if(weight_lender != 0) selected_vars <- append(selected_vars, "vun_lender")
   if(weight_income != 0) selected_vars <- append(selected_vars, "vun_income")
@@ -50,14 +62,16 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
   if(weight_black != 0) selected_vars <- append(selected_vars, "vun_black")
   if(weight_hispaniclat!= 0) selected_vars <- append(selected_vars, "vun_hispaniclat")
   
-  # Filter to counties of interest
+  # Filter for only counties that the user has selected
   tn_tract_filtered <- tn_tract_dash %>% 
     filter(county %in% counties)
   
-  # Run the vulnerability scores
+  # Calculate all vulnerability scores for all variables for the tracts within 
+  # the selected counties
+  
   #CREATE VARIABLE BUCKETS
   
-  #n_lenders (DONE)
+  #n_lenders
   varlist_lenders <- tn_tract_filtered %>% 
     select("NAME", "n_lenders", "county") %>% 
     mutate(max_lender = max(n_lenders, na.rm = TRUE)) %>% 
@@ -74,14 +88,14 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
     mutate(vun_income = 1-vun_income) %>% 
     mutate(vun_income = vun_income/max(vun_income, na.rm = TRUE))
   
-  #percent_noncitizen (DONE)
+  #percent_noncitizen
   varlist_noncitizen <- tn_tract_filtered %>% 
     select("NAME", "percent_noncitizen") %>% 
     mutate(max_percent_noncitizen = max(percent_noncitizen, na.rm = TRUE)) %>% 
     mutate(vun_noncitizen = percent_noncitizen/max_percent_noncitizen) %>% 
     arrange(desc(vun_noncitizen))
   
-  #total_percent_highschool (ISSUE: VUN SCORE DOES NOT BEGIN AT ZERO)
+  #total_percent_highschool
   varlist_highschool <- tn_tract_filtered %>% 
     select("NAME", "total_percent_highschool") %>% 
     mutate(total_percent_highschool = as.numeric(total_percent_highschool)) %>% 
@@ -137,7 +151,7 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
     mutate(vun_hispaniclat = percent_hispaniclat/max(percent_hispaniclat, na.rm = TRUE)) %>% 
     arrange(desc(vun_hispaniclat))
   
-  #CREATE DATAFRAM WITH ALL VUN SCORES
+  #CREATE DATAFRAME WITH ALL VUN SCORES
   varlist_vun <- varlist_lenders %>% 
     left_join(varlist_income <- st_drop_geometry(varlist_income) %>% select("NAME", "vun_income"), by = "NAME") %>% 
     left_join(varlist_noncitizen <- st_drop_geometry(varlist_noncitizen) %>% select("NAME", "vun_noncitizen"), by = "NAME") %>% 
@@ -174,44 +188,51 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
   # Spit out results -- name it model_results
   return(model_results)
 }
+#END BETTERFI_MODEL=============================================================
 
 
-# Define UI for application that draws a histogram
+# Define UI for application 
 ui <- fluidPage(
   #TITLE FOR DASHBOARD
   titlePanel("BetterFi Interactive Dashboard"),
   
   #CREATES SLIDE/PANNELS FOR DATA DISPLAYS
   navlistPanel(
-    #INTRO PANNEL===============================================================
+    #INTRO PANNEL UI------------------------------------------------------------
     tabPanel("Introduction",
              h3("Here is our introduction")
     ),
     
-    #GRAPH PANNEL===============================================================
+    #GRAPH PANNE UI-------------------------------------------------------------
     tabPanel("Interactive Graphs",
              h3("Here is our interactive graph panel"),
              fluidRow(
                column(3, "Variable Selection",
+                      
+                      #creates drop down for county selection for graph
                       selectizeInput("county", "Select County",
                                      choices = county_names,
                                      multiple = TRUE,
                                      selected = "AndersonCounty"
                       ),
+                      
+                      #allows user to select x variable in graph
                       selectizeInput("graph_xvar", "Select X Variable",
                                      choices = graph_vars,
                                      selected = "avg_income"),
+                      
+                      #display for selecting interactive y variable, any selected 
+                      #x variable will not appear in this list
                       uiOutput("graph_yvar")
-                      # Reactive text example UI element
-                      # uiOutput("text")
                ),
              ),
+             #output the user generated graph
              column(9, "Graph Output",
                     plotOutput("graph")
              )
     ),
     
-    #MAPS PANNEL================================================================
+    #MAPS PANNEL UI-------------------------------------------------------------
     tabPanel("Interactive Maps",
              h3("Here is our interactive map panel"),
              fluidRow(
@@ -230,21 +251,25 @@ ui <- fluidPage(
                                      choices = county_names,
                                      selected = "HamiltonCounty")
                ),
+               #output for user generated map
                column(9, "Map Output",
                       tmapOutput("map"))
              )
     ),
     
-    #MODEL PANNEL===============================================================
+    #MODEL PANNEL UI------------------------------------------------------------
     tabPanel("Interactive Vunerability Model",
              h3("Here is our interactive model panel"),
              fluidRow(
                column(3,
+                      
+                      #select the county for the betterfi_model
                       selectizeInput("model_counties", "Select Desired Counties",
                                      choices = county_names,
                                      multiple = TRUE,
                                      selected = "All"
                       ),
+                      #select the variable(s) to include in the betterfi_model
                       selectizeInput(
                         inputId = "vars",
                         label = "Select Desired Variables",
@@ -306,17 +331,17 @@ ui <- fluidPage(
                ),
                column(9, 
                       actionButton("model_button", "Click to Run Model")),
-                      # tableOutput("model_dt"),
-                      conditionalPanel(
-                        condition = "output.model_output_df != NULL",
-                        DTOutput("model_dt")
-                      )
+               # tableOutput("model_dt"),
+               conditionalPanel(
+                 condition = "output.model_output_df != NULL",
+                 DTOutput("model_dt")
+               )
                
              )
              
     ),
     
-    #TEAM PANNEL================================================================
+    #TEAM PANNEL UI-------------------------------------------------------------
     tabPanel("Meet The Team",
              h3("The BetterFi Team")
     ),
@@ -327,7 +352,7 @@ ui <- fluidPage(
 
 
 
-# Define server logic required to draw a histogram
+# Define server logic 
 server <- function(input, output) {
   #GRAPH SERVER=================================================================
   
