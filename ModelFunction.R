@@ -1,7 +1,9 @@
-# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 library(tidyverse)
 
+# Load raw dataset
+load("data/tennessee/tn_tract_dash.RData")
 
 betterfi_model <- function(counties, weight_lender, weight_income, weight_noncitizen,
                            weight_highschool, weight_veteran, weight_mediangrossrent,
@@ -21,9 +23,6 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
   if(weight_unemployed != 0) selected_vars <- append(selected_vars, "vun_unemployed")
   if(weight_black != 0) selected_vars <- append(selected_vars, "vun_black")
   if(weight_hispaniclat!= 0) selected_vars <- append(selected_vars, "vun_hispaniclat")
-  
-  # Load raw dataset
-  load("data/tennessee/tn_tract_dash.RData")
   
   # Filter to counties of interest
   tn_tract_filtered <- tn_tract_dash %>% 
