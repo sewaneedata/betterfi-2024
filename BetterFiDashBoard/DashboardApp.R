@@ -98,7 +98,7 @@ ui <- fluidPage(
                       selectizeInput(
                         inputId = "vars",
                         label = "Select Desired Variables",
-                        choices = c("Number Of Lenders", "Average Income", "Percentage Noncitizen", "Highschool Graduation Rate", "Percentage Veteran", "Median Gross Rent", "Percentage Divorced", "Unemployment Rate", "Percantage African American", "Percentage Hispanic/Latino"),
+                        choices = c("Number Of Predatory Lenders", "Average Income", "Percentage Noncitizen", "Highschool Graduation Rate", "Percentage Veteran", "Median Gross Rent", "Percentage Divorced", "Unemployment Rate", "Percantage African American", "Percentage Hispanic/Latino"),
                         multiple = TRUE
                       ),
                       # This only pops up if variable 1 is selected
@@ -254,7 +254,7 @@ server <- function(input, output) {
   output$weight_lender <- renderUI({
     sliderInput(
       inputId = "weight_lender",
-      label = "Numer Of Predatory Lenders",
+      label = "Number Of Predatory Lenders",
       min = 0,
       # If the input weight is null because it hasn't been loaded yet, set the max to 1
       # Otherwise, set the max to 1 minus the sum of the other weights
@@ -262,7 +262,7 @@ server <- function(input, output) {
       # If the input weight is null because it hasn't been loaded yet or if it is unselected from
       # the variable input, set it equal to 0, otherwise, set it equal to itself so that it doesn't
       # get reset to 0 when other weight inputs change
-      value = ifelse(is.null(input$weight_lender) || !"1" %in% input$vars, 0, input$weight_lender),
+      value = ifelse(is.null(input$weight_lender) || !"Number Of Predatory Lenders" %in% input$vars, 0, input$weight_lender),
       # Only increase or decrease the value in steps of 0.01 to prevent any horrible fractions and
       # scientific notation
       step = 0.01
@@ -275,7 +275,7 @@ server <- function(input, output) {
       label = "Average Income",
       min = 0,
       max = ifelse(is.null(input$weight_income), 1, 1 - (weight_sum() - input$weight_income)),
-      value = ifelse(is.null(input$weight_income) || !"2" %in% input$vars, 0, input$weight_income),
+      value = ifelse(is.null(input$weight_income) || !"Average Income" %in% input$vars, 0, input$weight_income),
       step = 0.01
     )
   })
@@ -286,7 +286,7 @@ server <- function(input, output) {
       label = "Percentage Noncitizen",
       min = 0,
       max = ifelse(is.null(input$weight_noncitizen), 1, 1 - (weight_sum() - input$weight_noncitizen)),
-      value = ifelse(is.null(input$weight_noncitizen) || !"3" %in% input$vars, 0, input$weight_noncitizen),
+      value = ifelse(is.null(input$weight_noncitizen) || !"Percentage Noncitizen" %in% input$vars, 0, input$weight_noncitizen),
       step = 0.01
     )
   })
@@ -297,7 +297,7 @@ server <- function(input, output) {
       label = "Highschool Graduation Rate",
       min = 0,
       max = ifelse(is.null(input$weight_highschool), 1, 1 - (weight_sum() - input$weight_highschool)),
-      value = ifelse(is.null(input$weight_highschool) || !"4" %in% input$vars, 0, input$weight_highschool),
+      value = ifelse(is.null(input$weight_highschool) || !"Highschool Graduation Rate" %in% input$vars, 0, input$weight_highschool),
       step = 0.01
     )
   })
@@ -308,7 +308,7 @@ server <- function(input, output) {
       label = "Percentage Of Veterans",
       min = 0,
       max = ifelse(is.null(input$weight_veteran), 1, 1 - (weight_sum() - input$weight_veteran)),
-      value = ifelse(is.null(input$weight_veteran) || !"5" %in% input$vars, 0, input$weight_veteran),
+      value = ifelse(is.null(input$weight_veteran) || !"Percentage Of Veterans" %in% input$vars, 0, input$weight_veteran),
       step = 0.01
     )
   })
@@ -319,7 +319,7 @@ server <- function(input, output) {
       label = "Median Gross Rent",
       min = 0,
       max = ifelse(is.null(input$weight_mediangrossrent), 1, 1 - (weight_sum() - input$weight_mediangrossrent)),
-      value = ifelse(is.null(input$weight_mediangrossrent) || !"6" %in% input$vars, 0, input$weight_mediangrossrent),
+      value = ifelse(is.null(input$weight_mediangrossrent) || !"Median Gross Rent" %in% input$vars, 0, input$weight_mediangrossrent),
       step = 0.01
     )
   })
@@ -327,10 +327,10 @@ server <- function(input, output) {
   output$weight_divorced <- renderUI({
     sliderInput(
       inputId = "weight_divorced",
-      label = "Percentage Divorced ",
+      label = "Percentage Divorced",
       min = 0,
       max = ifelse(is.null(input$weight_divorced), 1, 1 - (weight_sum() - input$weight_divorced)),
-      value = ifelse(is.null(input$weight_divorced) || !"7" %in% input$vars, 0, input$weight_divorced),
+      value = ifelse(is.null(input$weight_divorced) || !"Percentage Divorced" %in% input$vars, 0, input$weight_divorced),
       step = 0.01
     )
   })
@@ -341,7 +341,7 @@ server <- function(input, output) {
       label = "Unemployment Rate",
       min = 0,
       max = ifelse(is.null(input$weight_unemployed), 1, 1 - (weight_sum() - input$weight_unemployed)),
-      value = ifelse(is.null(input$weight_unemployed) || !"8" %in% input$vars, 0, input$weight_unemployed),
+      value = ifelse(is.null(input$weight_unemployed) || !"Unemployment Rate" %in% input$vars, 0, input$weight_unemployed),
       step = 0.01
     )
   })
@@ -352,7 +352,7 @@ server <- function(input, output) {
       label = "Percent African American",
       min = 0,
       max = ifelse(is.null(input$weight_black), 1, 1 - (weight_sum() - input$weight_black)),
-      value = ifelse(is.null(input$weight_black) || !"9" %in% input$vars, 0, input$weight_black),
+      value = ifelse(is.null(input$weight_black) || !"Percent African American" %in% input$vars, 0, input$weight_black),
       step = 0.01
     )
   })
@@ -363,7 +363,7 @@ server <- function(input, output) {
       label = "Percent Hispanic/Latino",
       min = 0,
       max = ifelse(is.null(input$weight_hispaniclat), 1, 1 - (weight_sum() - input$weight_hispaniclat)),
-      value = ifelse(is.null(input$weight_hispaniclat) || !"10" %in% input$vars, 0, input$weight_hispaniclat),
+      value = ifelse(is.null(input$weight_hispaniclat) || !"Percent Hispanic/Latino" %in% input$vars, 0, input$weight_hispaniclat),
       step = 0.01
     )
   })
