@@ -711,7 +711,7 @@ tn_tract <- tn_tract %>%
 
 
 #renames the column added by the unemployment dataset from percent to unemployedpercent
-tn_tract <- tn_tract %>% rename(unemployedpercent = Percent)
+tn_tract <- tn_tract %>% rename(Unemployed = Percent)
 
 
 # #--------------------------------MISC.CODE-------------------------------------#
@@ -719,6 +719,7 @@ tn_tract <- tn_tract %>% rename(unemployedpercent = Percent)
 # 
 # #write RData for tn tract (main working dataframe)
 save(tn_tract, file="tn_data.RData")
+save(tn_tract, file="data/tennessee/tn_data.RData")
 # 
 # 
 # #add Company Name to tn Lenders Dataframe
@@ -740,3 +741,4 @@ save(tn_tract, file="tn_data.RData")
 # 
 # 
 # #------------------------------------------------------------------------------#
+load("tn_data.RData")
