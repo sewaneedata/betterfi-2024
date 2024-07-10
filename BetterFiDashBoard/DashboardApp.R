@@ -12,6 +12,7 @@ library(ggplot2)
 library(sf)
 library(stringr)
 library(tmap)
+library(DT)
 
 load("../data/tennessee/tn_tract_dash.RData")
 
@@ -97,62 +98,65 @@ ui <- fluidPage(
                       selectizeInput(
                         inputId = "vars",
                         label = "Select Desired Variables",
-                        choices = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"),
+                        choices = c("Number Of Lenders", "Average Income", "Percentage Noncitizen", "Highschool Graduation Rate", "Percentage Veteran", "Median Gross Rent", "Percentage Divorced", "Unemployment Rate", "Percantage African American", "Percentage Hispanic/Latino"),
                         multiple = TRUE
                       ),
                       # This only pops up if variable 1 is selected
                       conditionalPanel(
                         # The condition is in JavaScript hence the weird format
-                        condition = "input.vars.includes('1')",
-                        uiOutput("weight1"),
+                        condition = "input.vars.includes('Number Of Predatory Lenders')",
+                        uiOutput("weight_lender"),
                       ),
                       # This only pops up if variable 2 is selected
                       conditionalPanel(
-                        condition = "input.vars.includes('2')",
-                        uiOutput("weight2"),
+                        condition = "input.vars.includes('Average Income')",
+                        uiOutput("weight_income"),
                       ),
                       # This only pops up if variable 3 is selected
                       conditionalPanel(
-                        condition = "input.vars.includes('3')",
-                        uiOutput("weight3"),
+                        condition = "input.vars.includes('Percentage Noncitizen')",
+                        uiOutput("weight_noncitizen"),
                       ),
                       # This only pops up if variable 4 is selected
                       conditionalPanel(
-                        condition = "input.vars.includes('4')",
-                        uiOutput("weight4"),
+                        condition = "input.vars.includes('Highschool Graduation Rate')",
+                        uiOutput("weight_highschool"),
                       ),
                       # This only pops up if variable 5 is selected
                       conditionalPanel(
-                        condition = "input.vars.includes('5')",
-                        uiOutput("weight5"),
+                        condition = "input.vars.includes('Percentage Veteran')",
+                        uiOutput("weight_veteran"),
                       ),
                       # This only pops up if variable 6 is selected
                       conditionalPanel(
-                        condition = "input.vars.includes('6')",
-                        uiOutput("weight6"),
+                        condition = "input.vars.includes('Median Gross Rent')",
+                        uiOutput("weight_mediangrossrent"),
                       ),
                       # This only pops up if variable 7 is selected
                       conditionalPanel(
-                        condition = "input.vars.includes('7')",
-                        uiOutput("weight7"),
+                        condition = "input.vars.includes('Percentage Divorced')",
+                        uiOutput("weight_divorced"),
                       ),
                       # This only pops up if variable 8 is selected
                       conditionalPanel(
-                        condition = "input.vars.includes('8')",
-                        uiOutput("weight8"),
+                        condition = "input.vars.includes('Unemployment Rate')",
+                        uiOutput("weight_unemployed"),
                       ),
                       # This only pops up if variable 9 is selected
                       conditionalPanel(
-                        condition = "input.vars.includes('9')",
-                        uiOutput("weight9"),
+                        condition = "input.vars.includes('Percantage African American')",
+                        uiOutput("weight_black"),
                       ),
                       # This only pops up if variable 10 is selected
                       conditionalPanel(
-                        condition = "input.vars.includes('10')",
-                        uiOutput("weight10"),
+                        condition = "input.vars.includes('Percentage Hispanic/Latino')",
+                        uiOutput("weight_hispaniclat"),
                       )
                       ),
-               column(9, )
+               column(9, 
+                      # actionButton("model_button", "Click to Run Model"),
+                      # dataTableOutput("tract_vun_ranking_tn")
+                      )
              )
     ),
     
@@ -168,6 +172,7 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+  #GRAPH SERVER=================================================================
   
   #GRAPHS - UPDATES Y VAR LSIT TO REMOVE SELECTED X VAR
   output$graph_yvar <- renderUI({
@@ -175,7 +180,6 @@ server <- function(input, output) {
                    choices = graph_vars[graph_vars != input$graph_xvar])
   })
   
-  #GRAPH SERVER=================================================================
   output$graph <- renderPlot({
     
     # Check the values that this graph relies on for debugging
@@ -224,7 +228,7 @@ server <- function(input, output) {
   }) 
   
   
-  #MAP SERVER===================================================================
+  #MODEL SERVER===================================================================
   # This is a reactive value that will store the sum of the weights and update as input changes
   weight_sum <- reactiveVal(0)
   
@@ -232,141 +236,144 @@ server <- function(input, output) {
   weight_change_observer <- observe({
     # Vector of the weight values
     weights <- c(
-      input$weight1,
-      input$weight2,
-      input$weight3,
-      input$weight4,
-      input$weight5,
-      input$weight6,
-      input$weight7,
-      input$weight8,
-      input$weight9,
-      input$weight10
+      input$weight_lender,
+      input$weight_income,
+      input$weight_noncitizen,
+      input$weight_highschool,
+      input$weight_veteran,
+      input$weight_mediangrossrent,
+      input$weight_divorced,
+      input$weight_unemployed,
+      input$weight_black,
+      input$weight_hispaniclat
     )
     # Setting the weight_sum variable to the sum of the weights and removing any NAs
     weight_sum(sum(weights, na.rm = TRUE))
   })
   
-  output$weight1 <- renderUI({
+  output$weight_lender <- renderUI({
     sliderInput(
-      inputId = "weight1",
-      label = "Weight 1",
+      inputId = "weight_lender",
+      label = "Numer Of Predatory Lenders",
       min = 0,
       # If the input weight is null because it hasn't been loaded yet, set the max to 1
       # Otherwise, set the max to 1 minus the sum of the other weights
-      max = ifelse(is.null(input$weight1), 1, 1 - (weight_sum() - input$weight1)),
+      max = ifelse(is.null(input$weight_lender), 1, 1 - (weight_sum() - input$weight_lender)),
       # If the input weight is null because it hasn't been loaded yet or if it is unselected from
       # the variable input, set it equal to 0, otherwise, set it equal to itself so that it doesn't
       # get reset to 0 when other weight inputs change
-      value = ifelse(is.null(input$weight1) || !"1" %in% input$vars, 0, input$weight1),
+      value = ifelse(is.null(input$weight_lender) || !"1" %in% input$vars, 0, input$weight_lender),
       # Only increase or decrease the value in steps of 0.01 to prevent any horrible fractions and
       # scientific notation
       step = 0.01
     )
   })
   
-  output$weight2 <- renderUI({
+  output$weight_income <- renderUI({
     sliderInput(
-      inputId = "weight2",
-      label = "Weight 2",
+      inputId = "weight_income",
+      label = "Average Income",
       min = 0,
-      max = ifelse(is.null(input$weight2), 1, 1 - (weight_sum() - input$weight2)),
-      value = ifelse(is.null(input$weight2) || !"2" %in% input$vars, 0, input$weight2),
+      max = ifelse(is.null(input$weight_income), 1, 1 - (weight_sum() - input$weight_income)),
+      value = ifelse(is.null(input$weight_income) || !"2" %in% input$vars, 0, input$weight_income),
       step = 0.01
     )
   })
   
-  output$weight3 <- renderUI({
+  output$weight_noncitizen <- renderUI({
     sliderInput(
-      inputId = "weight3",
-      label = "Weight 3",
+      inputId = "weight_noncitizen",
+      label = "Percentage Noncitizen",
       min = 0,
-      max = ifelse(is.null(input$weight3), 1, 1 - (weight_sum() - input$weight3)),
-      value = ifelse(is.null(input$weight3) || !"3" %in% input$vars, 0, input$weight3),
+      max = ifelse(is.null(input$weight_noncitizen), 1, 1 - (weight_sum() - input$weight_noncitizen)),
+      value = ifelse(is.null(input$weight_noncitizen) || !"3" %in% input$vars, 0, input$weight_noncitizen),
       step = 0.01
     )
   })
   
-  output$weight4 <- renderUI({
+  output$weight_highschool <- renderUI({
     sliderInput(
-      inputId = "weight4",
-      label = "Weight 4",
+      inputId = "weight_highschool",
+      label = "Highschool Graduation Rate",
       min = 0,
-      max = ifelse(is.null(input$weight4), 1, 1 - (weight_sum() - input$weight4)),
-      value = ifelse(is.null(input$weight4) || !"4" %in% input$vars, 0, input$weight4),
+      max = ifelse(is.null(input$weight_highschool), 1, 1 - (weight_sum() - input$weight_highschool)),
+      value = ifelse(is.null(input$weight_highschool) || !"4" %in% input$vars, 0, input$weight_highschool),
       step = 0.01
     )
   })
   
-  output$weight5 <- renderUI({
+  output$weight_veteran <- renderUI({
     sliderInput(
-      inputId = "weight5",
-      label = "Weight 5",
+      inputId = "weight_veteran",
+      label = "Percentage Of Veterans",
       min = 0,
-      max = ifelse(is.null(input$weight5), 1, 1 - (weight_sum() - input$weight5)),
-      value = ifelse(is.null(input$weight5) || !"5" %in% input$vars, 0, input$weight5),
+      max = ifelse(is.null(input$weight_veteran), 1, 1 - (weight_sum() - input$weight_veteran)),
+      value = ifelse(is.null(input$weight_veteran) || !"5" %in% input$vars, 0, input$weight_veteran),
       step = 0.01
     )
   })
   
-  output$weight6 <- renderUI({
+  output$weight_mediangrossrent <- renderUI({
     sliderInput(
-      inputId = "weight6",
-      label = "Weight 6",
+      inputId = "weight_mediangrossrent",
+      label = "Median Gross Rent",
       min = 0,
-      max = ifelse(is.null(input$weight6), 1, 1 - (weight_sum() - input$weight6)),
-      value = ifelse(is.null(input$weight6) || !"6" %in% input$vars, 0, input$weight6),
+      max = ifelse(is.null(input$weight_mediangrossrent), 1, 1 - (weight_sum() - input$weight_mediangrossrent)),
+      value = ifelse(is.null(input$weight_mediangrossrent) || !"6" %in% input$vars, 0, input$weight_mediangrossrent),
       step = 0.01
     )
   })
   
-  output$weight7 <- renderUI({
+  output$weight_divorced <- renderUI({
     sliderInput(
-      inputId = "weight7",
-      label = "Weight 7",
+      inputId = "weight_divorced",
+      label = "Percentage Divorced ",
       min = 0,
-      max = ifelse(is.null(input$weight7), 1, 1 - (weight_sum() - input$weight7)),
-      value = ifelse(is.null(input$weight7) || !"7" %in% input$vars, 0, input$weight7),
+      max = ifelse(is.null(input$weight_divorced), 1, 1 - (weight_sum() - input$weight_divorced)),
+      value = ifelse(is.null(input$weight_divorced) || !"7" %in% input$vars, 0, input$weight_divorced),
       step = 0.01
     )
   })
   
-  output$weight8 <- renderUI({
+  output$weight_unemployed <- renderUI({
     sliderInput(
-      inputId = "weight8",
-      label = "Weight 8",
+      inputId = "weight_unemployed",
+      label = "Unemployment Rate",
       min = 0,
-      max = ifelse(is.null(input$weight8), 1, 1 - (weight_sum() - input$weight8)),
-      value = ifelse(is.null(input$weight8) || !"8" %in% input$vars, 0, input$weight8),
+      max = ifelse(is.null(input$weight_unemployed), 1, 1 - (weight_sum() - input$weight_unemployed)),
+      value = ifelse(is.null(input$weight_unemployed) || !"8" %in% input$vars, 0, input$weight_unemployed),
       step = 0.01
     )
   })
   
-  output$weight9 <- renderUI({
+  output$weight_black <- renderUI({
     sliderInput(
-      inputId = "weight9",
-      label = "Weight 9",
+      inputId = "weight_black",
+      label = "Percent African American",
       min = 0,
-      max = ifelse(is.null(input$weight9), 1, 1 - (weight_sum() - input$weight9)),
-      value = ifelse(is.null(input$weight9) || !"9" %in% input$vars, 0, input$weight9),
+      max = ifelse(is.null(input$weight_black), 1, 1 - (weight_sum() - input$weight_black)),
+      value = ifelse(is.null(input$weight_black) || !"9" %in% input$vars, 0, input$weight_black),
       step = 0.01
     )
   })
   
-  output$weight10 <- renderUI({
+  output$weight_hispaniclat <- renderUI({
     sliderInput(
-      inputId = "weight10",
-      label = "Weight 10",
+      inputId = "weight_hispaniclat",
+      label = "Percent Hispanic/Latino",
       min = 0,
-      max = ifelse(is.null(input$weight10), 1, 1 - (weight_sum() - input$weight10)),
-      value = ifelse(is.null(input$weight10) || !"10" %in% input$vars, 0, input$weight10),
+      max = ifelse(is.null(input$weight_hispaniclat), 1, 1 - (weight_sum() - input$weight_hispaniclat)),
+      value = ifelse(is.null(input$weight_hispaniclat) || !"10" %in% input$vars, 0, input$weight_hispaniclat),
       step = 0.01
     )
   })
   
   #OUTPUT FOR MODEL GIVEN WEIGHT IMPUTS
-  output$vul_model
-    
+  # observeEvent(input$model_button){
+  #   
+  #   
+  # }
+  #   
 }
 
 
