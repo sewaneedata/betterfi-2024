@@ -211,6 +211,8 @@ tm_shape(tn_tract2)+
 
 ##################################################################################
 
+load("D:/kyle_datalab/betterfi-2024/tn_data.RData")
+
 #load geography information
 counties_tract <- get_acs(geography = "county",
                     state = "TN",
@@ -226,12 +228,27 @@ tn_poly <- st_union(tn_tract$geometry)
 tm_shape(tn_poly)+
   tm_polygons()
 
-counties_tract <- counties_tract %>% 
-  # rename(Unemployed = "unemployedpercent") %>% 
-  mutate(County = str_extract(NAME, "(?<=;)[^;]+(?=;)")) %>% 
-  mutate(County = str_replace_all(county, "County", ""))
+#formate column names and create county column for organization
 
-#counties_tract$county <- gsub(" ", "", counties_tract$county)
+#counties_tract <- tn_tract %>% 
+  # rename(Unemployed = "unemployedpercent") %>% 
+  mutate(county = str_extract(NAME, "(?<=;)[^;]+(?=;)")) 
+# %>%
+#   mutate(county = str_replace_all(county, "County", ""))
+
+#counties_tract$county <- gsub(" ", "", tn_tract$county)
+
+counties_tract <- counties_tract  %>%
+    mutate(County = case_when(
+      NAME == "Hamilton County, Tennessee" ~ "Hamilton County",
+      NAME == "Rutherford County, Tennessee" ~ "Rutherford County",
+      TRUE ~ NA_character_  # For all other cases, set to NA
+    ))
+
+######
+
+counties_tract <- counties_tract %>%
+  filter(grepl("Rutherford County", county) | grepl("Hamilton County", county))
 
 save(counties_tract, file="data/tennessee/dontpushthis.RData")
 
@@ -246,7 +263,7 @@ tm_shape(counties_tract)+
 tm_shape(tn_poly) + 
   tm_polygons(border.col = "black") +       # Base layer with black borders
   tm_shape(counties_tract) + 
-  tm_polygons(col="NAME",          # Overlay layer with grey borders
+  tm_polygons(col="County",          # Overlay layer with grey borders
               alpha = 0.7) +                # Transparency level for overlay
   tm_layout(legend.position = c("right", "bottom"))
 
