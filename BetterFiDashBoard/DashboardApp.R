@@ -305,7 +305,12 @@ ui <- fluidPage(
                       )
                ),
                column(9, 
-                      actionButton("model_button", "Click to Run Model"))
+                      actionButton("model_button", "Click to Run Model")),
+                      # tableOutput("model_dt"),
+                      conditionalPanel(
+                        condition = "output.model_output_df != NULL",
+                        DTOutput("model_dt")
+                      )
                
              )
              
@@ -521,6 +526,9 @@ server <- function(input, output) {
     )
   })
   
+  # Reactive value to store the data frame/table for the model outputs
+  model_output_df <- reactiveVal()
+  
   #OUTPUT FOR MODEL GIVEN WEIGHT IMPUTS
   observeEvent(input$model_button, {
     # Creating an empty vector to store county input for model
@@ -544,8 +552,8 @@ server <- function(input, output) {
         weight_black = input$weight_black,
         weight_hispaniclat = input$weight_hispaniclat 
       )
-      # Printing the model results to the console
-      print(model_results)
+      # Storing the data frame in the reactive model_output_df variable
+      model_output_df(model_results)
     }
     # If "All" is not the only selected county then only use the individually specified
     # counties that were selected
@@ -566,10 +574,15 @@ server <- function(input, output) {
         weight_black = input$weight_black,
         weight_hispaniclat = input$weight_hispanicla 
       )
-      # Printing the model results to the console
-      print(model_results)
+      # Storing the data frame in the reactive model_output_df variable
+      model_output_df(model_results)
     }
+    print(model_output_df())
   })
+  
+  output$model_dt <- renderDT(
+    model_output_df()
+  )
 }
 
 
