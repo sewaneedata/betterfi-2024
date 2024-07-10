@@ -69,80 +69,117 @@ load("data/total_lender_info.RData")
 
 
 #load geography information
-hamilton_tract <- get_acs(geography = "tract",
+ruth_tract <- get_acs(geography = "tract",
                     state = "TN",
                     variables = "B01003_001",
-                    county = "Hamilton",
+                    county = "Rutherford",
                     year = 2022,
                     geometry = TRUE)
 
 
 #map for hamilton census tracts
 tmap_mode("view")
-tm_shape(hamilton_tract)+
+tm_shape(ruth_tract)+
   tm_polygons()
 
 
 #create hamilton Polygon
-hamilton_poly <- st_union(hamilton_tract$geometry)
+ruth_poly <- st_union(ruth_tract$geometry)
 
-tm_shape(hamilton_poly)+
+tm_shape(ruth_poly)+
   tm_polygons()
 
 
 #check which points are in hamilton_polygon
 points <- total_lender_info$pnt
 
-st_crs(hamilton_poly) <- st_crs(points)
+st_crs(ruth_poly) <- st_crs(points)
 
-hamilton_lenders <- total_lender_info %>% 
-  mutate(Contained = ifelse(st_within(points, hamilton_poly), "Yes", "Not")) %>% 
+ruth_lenders <- total_lender_info %>% 
+  mutate(Contained = ifelse(st_within(points, ruth_poly), "Yes", "Not")) %>% 
   filter(Contained == "Yes")
 
 #create map for hamilton county lenders overlayed on hamilton county limits
 tmap_mode("view")
 
-tm_shape(hamilton_lenders)+ 
+tm_shape(ruth_lenders)+ 
   tm_dots()+
-  tm_shape(hamilton_tract)+
+  tm_shape(ruth_tract)+
   tm_polygons(alpha = 0.5)
 
 #count lenders in each census tract
-st_crs(hamilton_tract$geometry) <- st_crs(hamilton_lenders$pnt)
+st_crs(ruth_tract$geometry) <- st_crs(ruth_lenders$pnt)
 # find which census tract contains each lender
-m <- st_intersects( hamilton_lenders$pnt, hamilton_tract, sparse=FALSE )
+m <- st_intersects( ruth_lenders$pnt, ruth_tract, sparse=FALSE )
 # idx provides the row of the census tract for the given lender
 idx <- apply(m, 1, which)
 # now get the corresponding census tract names 
-hamilton_lenders$tract <- hamilton_tract$NAME[idx]
+ruth_lenders$tract <- ruth_tract$NAME[idx]
 
 #create dataset for lenders per tract
-lenders_per_tract <- hamilton_lenders %>% 
+lenders_per_tract <- ruth_lenders %>% 
   st_drop_geometry() %>%
   group_by( tract ) %>% 
   tally( name = "n_lenders") %>%
   arrange( desc(n_lenders) )
 
 #left join lender_per_tract to hamilton geometry dataset
-hamilton_tract <- left_join( hamilton_tract, lenders_per_tract %>% rename( NAME = tract ), by = "NAME" )
+ruth_tract <- left_join( ruth_tract, lenders_per_tract %>% rename( NAME = tract ), by = "NAME" )
 
 #create lender heat map
-tm_shape( hamilton_tract ) + tm_polygons( col="n_lenders", id = "NAME")
+tm_shape( ruth_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 
 #makes it so you can open our large hamilton state datasets
 Sys.setenv("VROOM_CONNECTION_SIZE"=5000000)
 
 
-tm_shape(hamilton_lenders)+
-  tm_dots()+
-  tm_shape(hamilton_tract)+
-  tm_polygons(alpha = 0.5,hamilton_tract)
 
-tm_shape(hamilton_tract)+
-  tm_dots()+
-  tm_shape(hamilton_tract)+
-  tm_polygons(alpha = 0.5)
+acs_income_ruth <- read_csv("data/tennessee/acs_income_tn.csv")
+acs_income_ruth <- acs_income_ruth %>% 
+  select(-contains("Margin of Error")) %>% 
+  select(contains("Household")) %>% 
+  select(-contains("Nonfamily")) #removes columns with margin of error and nonfamily, keeping only the household income data
 
+
+#Select just Average Income, Pivot Longer to have just one row per census tract
+acs_income_ruth <- acs_income_ruth[13, ] #select just row 13 which is average income
+acs_income_ruth <- acs_income_ruth %>% 
+  pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "avg_income") 
+acs_income_ruth <- acs_income_ruth %>% filter(grepl("Rutherford County", NAME))
+
+
+#change census names to match "tn_tract"
+acs_income_ruth$NAME <-  gsub("!.*", "", acs_income_ruth$NAME) #removing text starting w exclamation mark
+acs_income_ruth$NAME <- gsub(",", ";", acs_income_ruth$NAME) #replaces commas w semicolon
+
+
+#join avg_income to tn_tract
+ruth_tract <- ruth_tract %>% 
+  left_join(acs_income_ruth, by = "NAME")
+ruth_tract$avg_income <- gsub(",", "", ruth_tract$avg_income)
+
+
+ruth_tract <- ruth_tract %>% 
+  mutate(avg_income = ifelse(avg_income == '-', NA, avg_income)) %>% 
+  mutate(avg_income = as.numeric(avg_income)) %>% 
+  mutate(avg_income_group = case_when(
+    avg_income < 29999 ~ "<30k",
+    avg_income >= 30000 & avg_income < 49999 ~ "30k-50k",
+    avg_income >= 50000 & avg_income < 69999 ~ "50k-70k",
+    avg_income >= 70000 & avg_income < 89999 ~ "70k-90k",
+    avg_income >= 90000 & avg_income < 109999 ~ "90k-110k",
+    avg_income >= 110000 & avg_income < 129999 ~ "110k-130k",
+    avg_income >= 130000 & avg_income < 149999 ~ "130k-150k",
+    avg_income >= 150000 & avg_income < 169999 ~ "150k-170k",
+    avg_income >= 170000 & avg_income < 189999 ~ "170k-190k",
+    avg_income > 190000 ~ ">190k",
+    TRUE~NA
+  ) ) %>% 
+  mutate(avg_income_group=fct_reorder(factor(avg_income_group), avg_income, .na_rm = TRUE))#factor reorder for viewing ease, so that the key is ordered from lowest to highest
+
+tmap_mode("plot")
+tm_shape(ruth_tract)+
+  tm_polygons( col = "avg_income_group", id="NAME", palette = "Blues")+  tm_layout(legend.position = c("right", "bottom"))
 
 ggplot(data=tn_tract,aes(x=Divorced,y=n_lenders,color=))+geom_col()
 
@@ -166,7 +203,7 @@ tn_tract2 <- tn_tract2 %>%
   mutate(percent_black_group=fct_reorder(factor(percent_black_group), percent_black, .na_rm = TRUE))#factor reorder for viewing ease, so that the key is ordered from lowest to highest
 
 tn_tract2 <- tn_tract2 %>%
-  filter(county.x == "HamiltonCounty")
+  filter(county.x == "RutherfordCounty")
 
 #create chloropleth for income
 tm_shape(tn_tract2)+
@@ -174,8 +211,10 @@ tm_shape(tn_tract2)+
 
 ##################################################################################
 
+load("D:/kyle_datalab/betterfi-2024/tn_data.RData")
+
 #load geography information
-counties_tract <- get_acs(geography = "tract",
+counties_tract <- get_acs(geography = "county",
                     state = "TN",
                     variables = "B01003_001",
                     county = c("Hamilton","Rutherford"),
@@ -189,28 +228,44 @@ tn_poly <- st_union(tn_tract$geometry)
 tm_shape(tn_poly)+
   tm_polygons()
 
-counties_tract <- counties_tract %>% 
+#formate column names and create county column for organization
+
+#counties_tract <- tn_tract %>% 
   # rename(Unemployed = "unemployedpercent") %>% 
   mutate(county = str_extract(NAME, "(?<=;)[^;]+(?=;)")) 
 # %>%
 #   mutate(county = str_replace_all(county, "County", ""))
 
-#counties_tract$county <- gsub(" ", "", counties_tract$county)
+#counties_tract$county <- gsub(" ", "", tn_tract$county)
 
-save(counties_tract, file="data/tennessee/tn_data.RData")
+counties_tract <- counties_tract  %>%
+    mutate(County = case_when(
+      NAME == "Hamilton County, Tennessee" ~ "Hamilton County",
+      NAME == "Rutherford County, Tennessee" ~ "Rutherford County",
+      TRUE ~ NA_character_  # For all other cases, set to NA
+    ))
+
+######
+
+counties_tract <- counties_tract %>%
+  filter(grepl("Rutherford County", county) | grepl("Hamilton County", county))
+
+save(counties_tract, file="data/tennessee/dontpushthis.RData")
 
 #map for tn census tracts
+#counties_tract <- counties_tract %>% rename(County=county)
+
 tmap_mode("plot")
 #tm_shape(tn_poly)+
 tm_shape(counties_tract)+
-  tm_polygons(col='county')
+  tm_polygons(col='County')
 
 tm_shape(tn_poly) + 
   tm_polygons(border.col = "black") +       # Base layer with black borders
   tm_shape(counties_tract) + 
-  tm_polygons(col="county",          # Overlay layer with grey borders
+  tm_polygons(col="County",          # Overlay layer with grey borders
               alpha = 0.7) +                # Transparency level for overlay
-  tm_layout(legend.position = c("left", "bottom"))
+  tm_layout(legend.position = c("right", "bottom"))
 
 
 #create tn Polygon
@@ -262,4 +317,4 @@ tm_shape( tn_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 #makes it so you can open our large tn state datasets
 Sys.setenv("VROOM_CONNECTION_SIZE"=5000000)
 
-
+summary(tract_vun_ranking_tn$weighted_vun)
