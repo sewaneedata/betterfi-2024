@@ -257,6 +257,7 @@ hamilton_tract <- hamilton_tract %>%
 
 #mutate %citizen and %noncitizen
 hamilton_tract <- hamilton_tract %>% 
+  # These two mutates introduce NaN values
   mutate(percent_citizen = (citizens/total_population)*100) %>% 
   mutate(percent_noncitizen = (noncitizens/total_population)*100)%>% 
   select(-"citizens") %>% 

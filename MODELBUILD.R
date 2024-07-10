@@ -29,8 +29,8 @@ load("data/hamilton_data.RData")
 #n_lenders (DONE)
 varlist_lenders <- hamilton_tract %>% 
   select("NAME", "n_lenders") %>% 
-  replace_na(list(n_lenders = 0)) %>% 
-  mutate(max_lender = max(n_lenders)) %>% 
+  # replace_na(list(n_lenders = 0)) %>% 
+  mutate(max_lender = max(n_lenders, na.rm = TRUE)) %>% 
   mutate(vun_lender = n_lenders/max_lender) %>% 
   arrange(desc(vun_lender)) %>% 
   select("NAME", "vun_lender") %>% 
@@ -39,18 +39,18 @@ varlist_lenders <- hamilton_tract %>%
 #avg_income
 varlist_income <- hamilton_tract %>% 
   select("NAME", "avg_income") %>% 
-  replace_na(list(avg_income = 0)) %>% 
-  filter(avg_income != 0) %>%
+  # replace_na(list(avg_income = 0)) %>% 
+  # filter(avg_income != 0) %>%
   arrange(avg_income) %>% 
-  mutate(vun_income = avg_income/max(avg_income)) %>% 
+  mutate(vun_income = avg_income/max(avg_income, na.rm = TRUE)) %>% 
   mutate(vun_income = 1-vun_income) %>% 
-  mutate(vun_income = vun_income/max(vun_income))
+  mutate(vun_income = vun_income/max(vun_income, na.rm = TRUE))
 
 #percent_noncitizen (DONE)
 varlist_noncitizen <- hamilton_tract %>% 
   select("NAME", "percent_noncitizen") %>% 
-  replace_na(list(percent_noncitizen = 0)) %>% 
-  mutate(max_percent_noncitizen = max(percent_noncitizen)) %>% 
+  # replace_na(list(percent_noncitizen = 0)) %>% 
+  mutate(max_percent_noncitizen = max(percent_noncitizen, na.rm = TRUE)) %>% 
   mutate(vun_noncitizen = percent_noncitizen/max_percent_noncitizen) %>% 
   arrange(desc(vun_noncitizen))
 
@@ -64,26 +64,26 @@ varlist_highschool <- hamilton_tract %>%
   # filter(vun_highschool != 0) %>%
   mutate(vun_highschool = 1 - vun_highschool) %>% 
   mutate(vun_highschool = vun_highschool/max(vun_highschool, na.rm=TRUE)) %>% 
-  arrange(desc(vun_highschool)) %>% 
-  drop_na(total_percent_highschool)
+  arrange(desc(vun_highschool)) # %>% 
+  # drop_na(total_percent_highschool)
 
 #percent veteran
 varlist_veteran <- hamilton_tract %>% 
   select("NAME", "percent_veteran") %>% 
   mutate(percent_veteran = as.numeric(gsub("%", "", percent_veteran))) %>% 
-  replace_na(list(percent_veteran = 0)) %>%
+  # replace_na(list(percent_veteran = 0)) %>%
   mutate(percent_veteran = as.numeric(percent_veteran)) %>% 
-  mutate(max_percent_veteran = max(percent_veteran)) %>% 
+  mutate(max_percent_veteran = max(percent_veteran, na.rm = TRUE)) %>% 
   mutate(vun_veteran = percent_veteran/max_percent_veteran) %>% 
-  arrange(desc(vun_veteran)) %>% 
-  filter(vun_veteran != 0)
+  arrange(desc(vun_veteran)) # %>% 
+  # filter(vun_veteran != 0)
 
 #median gross rent 
 varlist_mediangrossrent <- hamilton_tract %>% 
   select("NAME", "mediangrossrent") %>% 
   mutate(mediangrossrent = as.numeric(mediangrossrent)) %>% 
-  drop_na(mediangrossrent) %>% 
-  mutate(vun_mediangrossrent = mediangrossrent/max(mediangrossrent)) %>%
+  # drop_na(mediangrossrent) %>% 
+  mutate(vun_mediangrossrent = mediangrossrent/max(mediangrossrent, na.rm = TRUE)) %>%
   mutate(vun_mediangrossrent = 1 - vun_mediangrossrent) %>% 
   mutate(vun_mediangrossrent = vun_mediangrossrent/max(vun_mediangrossrent, na.rm=TRUE)) %>% 
   arrange(desc(vun_mediangrossrent))
@@ -92,9 +92,9 @@ varlist_mediangrossrent <- hamilton_tract %>%
 varlist_divorced <- hamilton_tract %>% 
   select("NAME", "Divorced") %>%
   mutate(Divorced = as.numeric(gsub("%", "", Divorced))) %>%
-  drop_na(Divorced) %>% 
+  # drop_na(Divorced) %>% 
   rename(percent_divorced = Divorced) %>% 
-  mutate(vun_divorced = percent_divorced/max(percent_divorced)) %>% 
+  mutate(vun_divorced = percent_divorced/max(percent_divorced, na.rm = TRUE)) %>% 
   arrange(desc(vun_divorced))
   
 #unemployment
@@ -102,22 +102,22 @@ varlist_unemployment <- hamilton_tract %>%
   select("NAME", "Unemployed") %>%
   rename(percent_unemployed = Unemployed) %>%
   mutate(percent_unemployed = as.numeric(gsub("%", "", percent_unemployed))) %>%
-  drop_na(percent_unemployed) %>% 
-  mutate(vun_unemployed = percent_unemployed/max(percent_unemployed)) %>% 
+  # drop_na(percent_unemployed) %>% 
+  mutate(vun_unemployed = percent_unemployed/max(percent_unemployed, na.rm = TRUE)) %>% 
   arrange(desc(vun_unemployed))
 
 #black_percent
 varlist_black <- hamilton_tract %>% 
   select("NAME", "percent_black") %>% 
-  drop_na(percent_black) %>% 
-  mutate(vun_black = percent_black/max(percent_black)) %>% 
+  # drop_na(percent_black) %>% 
+  mutate(vun_black = percent_black/max(percent_black, na.rm = TRUE)) %>% 
   arrange(desc(vun_black))
 
 #hispaniclat_percent
 varlist_hispaniclat <- hamilton_tract %>% 
   select("NAME", "percent_hispaniclat") %>% 
-  drop_na(percent_hispaniclat) %>%
-  mutate(vun_hispaniclat = percent_hispaniclat/max(percent_hispaniclat)) %>% 
+  # drop_na(percent_hispaniclat) %>%
+  mutate(vun_hispaniclat = percent_hispaniclat/max(percent_hispaniclat, na.rm = TRUE)) %>% 
   arrange(desc(vun_hispaniclat))
 
 
@@ -148,19 +148,27 @@ varlist_vun <- varlist_lenders %>%
 
 
 #calculate avg_vun score
-varlist_vun <- varlist_vun %>% 
-  mutate(weighted_vun = ((vun_lender)*(weight_lender)) + 
-           ((vun_income)*(weight_income)) +
-           ((vun_noncitizen)*(weight_noncitizen)) +
-           ((vun_highschool)*(weight_highschool)) +
-           ((vun_veteran)*(weight_veteran)) +
-           ((vun_mediangrossrent)*(weight_mediangrossrent)) +
-           ((vun_divorced)*(weight_divorced)) +
-           ((vun_unemployed)*(weight_unemployed)) +
-           ((vun_black)*(weight_black)) +
-           ((vun_hispaniclat)*(weight_hispaniclat)) 
-         ) %>% 
-  drop_na(weighted_vun) %>% 
+varlist_vun <- varlist_vun %>%
+  mutate(weighted_vun = (ifelse(is.na(vun_lender), 0, vun_lender)*(weight_lender)) + 
+           (ifelse(is.na(vun_income), 0, vun_income)*(weight_income)) +
+           (ifelse(is.na(vun_noncitizen), 0, vun_noncitizen)*(weight_noncitizen)) +
+           (ifelse(is.na(vun_highschool), 0, vun_highschool)*(weight_highschool)) +
+           (ifelse(is.na(vun_veteran), 0, vun_veteran)*(weight_veteran)) +
+           (ifelse(is.na(vun_mediangrossrent), 0, vun_mediangrossrent)*(weight_mediangrossrent)) +
+           (ifelse(is.na(vun_divorced), 0, vun_divorced)*(weight_divorced)) +
+           (ifelse(is.na(vun_unemployed), 0, vun_unemployed)*(weight_unemployed)) +
+           (ifelse(is.na(vun_black), 0, vun_black)*(weight_black)) +
+           (ifelse(is.na(vun_hispaniclat), 0, vun_hispaniclat)*(weight_hispaniclat)) 
+  ) %>% 
+  # If all of the variables are NA or NaN, change the weighted vulnerability
+  # score to NaN instead of 0
+  mutate(weighted_vun = ifelse(is.na(vun_lender) & is.na(vun_income) &
+                               is.na(vun_noncitizen) & is.na(vun_highschool) &
+                               is.na(vun_veteran) & is.na(vun_mediangrossrent) &
+                               is.na(vun_divorced) & is.na(vun_unemployed) &
+                               is.na(vun_black), NaN, weighted_vun
+  )) %>% 
+  # drop_na(weighted_vun) %>% 
   arrange(desc(weighted_vun))
 
 tract_vun_ranking_hamilton <- varlist_vun %>% 
@@ -193,8 +201,8 @@ save(tn_tract, file="data/tennessee/tn_data.RData")
 #n_lenders (DONE)
 varlist_lenders <- tn_tract %>% 
   select("NAME", "n_lenders", "county") %>% 
-  replace_na(list(n_lenders = 0)) %>% 
-  mutate(max_lender = max(n_lenders)) %>% 
+  # replace_na(list(n_lenders = 0)) %>% 
+  mutate(max_lender = max(n_lenders, na.rm = TRUE)) %>% 
   mutate(vun_lender = n_lenders/max_lender) %>% 
   arrange(desc(vun_lender)) %>% 
   select("NAME", "vun_lender", "county") %>% 
@@ -203,18 +211,18 @@ varlist_lenders <- tn_tract %>%
 #avg_income
 varlist_income <- tn_tract %>% 
   select("NAME", "avg_income") %>% 
-  replace_na(list(avg_income = 0)) %>% 
-  filter(avg_income != 0) %>%
+  # replace_na(list(avg_income = 0)) %>% 
+  # filter(avg_income != 0) %>%
   arrange(avg_income) %>% 
-  mutate(vun_income = avg_income/max(avg_income)) %>% 
+  mutate(vun_income = avg_income/max(avg_income, na.rm = TRUE)) %>% 
   mutate(vun_income = 1-vun_income) %>% 
-  mutate(vun_income = vun_income/max(vun_income))
+  mutate(vun_income = vun_income/max(vun_income, na.rm = TRUE))
 
 #percent_noncitizen (DONE)
 varlist_noncitizen <- tn_tract %>% 
   select("NAME", "percent_noncitizen") %>% 
-  replace_na(list(percent_noncitizen = 0)) %>% 
-  mutate(max_percent_noncitizen = max(percent_noncitizen)) %>% 
+  # replace_na(list(percent_noncitizen = 0)) %>% 
+  mutate(max_percent_noncitizen = max(percent_noncitizen, na.rm = TRUE)) %>% 
   mutate(vun_noncitizen = percent_noncitizen/max_percent_noncitizen) %>% 
   arrange(desc(vun_noncitizen))
 
@@ -228,26 +236,26 @@ varlist_highschool <- tn_tract %>%
   # filter(vun_highschool != 0) %>%
   mutate(vun_highschool = 1 - vun_highschool) %>% 
   mutate(vun_highschool = vun_highschool/max(vun_highschool, na.rm=TRUE)) %>% 
-  arrange(desc(vun_highschool)) %>% 
-  drop_na(total_percent_highschool)
+  arrange(desc(vun_highschool)) # %>% 
+  # drop_na(total_percent_highschool)
 
 #percent veteran
 varlist_veteran <- tn_tract %>% 
   select("NAME", "percent_veteran") %>% 
   mutate(percent_veteran = as.numeric(gsub("%", "", percent_veteran))) %>% 
-  replace_na(list(percent_veteran = 0)) %>%
+  # replace_na(list(percent_veteran = 0)) %>%
   mutate(percent_veteran = as.numeric(percent_veteran)) %>% 
-  mutate(max_percent_veteran = max(percent_veteran)) %>% 
+  mutate(max_percent_veteran = max(percent_veteran, na.rm = TRUE)) %>% 
   mutate(vun_veteran = percent_veteran/max_percent_veteran) %>% 
-  arrange(desc(vun_veteran)) %>% 
-  filter(vun_veteran != 0)
+  arrange(desc(vun_veteran)) # %>% 
+  # filter(vun_veteran != 0)
 
 #median gross rent 
 varlist_mediangrossrent <- tn_tract %>% 
   select("NAME", "mediangrossrent") %>% 
   mutate(mediangrossrent = as.numeric(mediangrossrent)) %>% 
-  drop_na(mediangrossrent) %>% 
-  mutate(vun_mediangrossrent = mediangrossrent/max(mediangrossrent)) %>%
+  # drop_na(mediangrossrent) %>% 
+  mutate(vun_mediangrossrent = mediangrossrent/max(mediangrossrent, na.rm = TRUE)) %>%
   mutate(vun_mediangrossrent = 1 - vun_mediangrossrent) %>% 
   mutate(vun_mediangrossrent = vun_mediangrossrent/max(vun_mediangrossrent, na.rm=TRUE)) %>% 
   arrange(desc(vun_mediangrossrent))
@@ -256,9 +264,9 @@ varlist_mediangrossrent <- tn_tract %>%
 varlist_divorced <- tn_tract %>% 
   select("NAME", "Divorced") %>%
   mutate(Divorced = as.numeric(gsub("%", "", Divorced))) %>%
-  drop_na(Divorced) %>% 
+  # drop_na(Divorced) %>% 
   rename(percent_divorced = Divorced) %>% 
-  mutate(vun_divorced = percent_divorced/max(percent_divorced)) %>% 
+  mutate(vun_divorced = percent_divorced/max(percent_divorced, na.rm = TRUE)) %>% 
   arrange(desc(vun_divorced))
 
 #unemployment
@@ -266,22 +274,22 @@ varlist_unemployment <- tn_tract %>%
   select("NAME", "Unemployed") %>%
   rename(percent_unemployed = Unemployed) %>%
   mutate(percent_unemployed = as.numeric(gsub("%", "", percent_unemployed))) %>%
-  drop_na(percent_unemployed) %>% 
-  mutate(vun_unemployed = percent_unemployed/max(percent_unemployed)) %>% 
+  # drop_na(percent_unemployed) %>% 
+  mutate(vun_unemployed = percent_unemployed/max(percent_unemployed, na.rm = TRUE)) %>% 
   arrange(desc(vun_unemployed))
 
 #black_percent
 varlist_black <- tn_tract %>% 
   select("NAME", "percent_black") %>% 
-  drop_na(percent_black) %>% 
-  mutate(vun_black = percent_black/max(percent_black)) %>% 
+  # drop_na(percent_black) %>% 
+  mutate(vun_black = percent_black/max(percent_black, na.rm = TRUE)) %>% 
   arrange(desc(vun_black))
 
 #hispaniclat_percent
 varlist_hispaniclat <- tn_tract %>% 
   select("NAME", "percent_hispaniclat") %>% 
-  drop_na(percent_hispaniclat) %>%
-  mutate(vun_hispaniclat = percent_hispaniclat/max(percent_hispaniclat)) %>% 
+  # drop_na(percent_hispaniclat) %>%
+  mutate(vun_hispaniclat = percent_hispaniclat/max(percent_hispaniclat, na.rm = TRUE)) %>% 
   arrange(desc(vun_hispaniclat))
 
 
@@ -313,18 +321,26 @@ varlist_vun <- varlist_lenders %>%
 
 #calculate avg_vun score
 varlist_vun <- varlist_vun %>% 
-  mutate(weighted_vun = ((vun_lender)*(weight_lender)) + 
-           ((vun_income)*(weight_income)) +
-           ((vun_noncitizen)*(weight_noncitizen)) +
-           ((vun_highschool)*(weight_highschool)) +
-           ((vun_veteran)*(weight_veteran)) +
-           ((vun_mediangrossrent)*(weight_mediangrossrent)) +
-           ((vun_divorced)*(weight_divorced)) +
-           ((vun_unemployed)*(weight_unemployed)) +
-           ((vun_black)*(weight_black)) +
-           ((vun_hispaniclat)*(weight_hispaniclat)) 
+  mutate(weighted_vun = (ifelse(is.na(vun_lender), 0, vun_lender)*(weight_lender)) + 
+           (ifelse(is.na(vun_income), 0, vun_income)*(weight_income)) +
+           (ifelse(is.na(vun_noncitizen), 0, vun_noncitizen)*(weight_noncitizen)) +
+           (ifelse(is.na(vun_highschool), 0, vun_highschool)*(weight_highschool)) +
+           (ifelse(is.na(vun_veteran), 0, vun_veteran)*(weight_veteran)) +
+           (ifelse(is.na(vun_mediangrossrent), 0, vun_mediangrossrent)*(weight_mediangrossrent)) +
+           (ifelse(is.na(vun_divorced), 0, vun_divorced)*(weight_divorced)) +
+           (ifelse(is.na(vun_unemployed), 0, vun_unemployed)*(weight_unemployed)) +
+           (ifelse(is.na(vun_black), 0, vun_black)*(weight_black)) +
+           (ifelse(is.na(vun_hispaniclat), 0, vun_hispaniclat)*(weight_hispaniclat)) 
   ) %>% 
-  drop_na(weighted_vun) %>% 
+  # If all of the variables are NA or NaN, change the weighted vulnerability
+  # score to NaN instead of 0
+  mutate(weighted_vun = ifelse(is.na(vun_lender) & is.na(vun_income) &
+                               is.na(vun_noncitizen) & is.na(vun_highschool) &
+                               is.na(vun_veteran) & is.na(vun_mediangrossrent) &
+                               is.na(vun_divorced) & is.na(vun_unemployed) &
+                               is.na(vun_black), NaN, weighted_vun
+  )) %>% 
+  # drop_na(weighted_vun) %>% 
   arrange(desc(weighted_vun))
 
 tract_vun_ranking_tn <- varlist_vun %>% 
@@ -338,10 +354,10 @@ view(tract_vun_ranking_tn)
 #-------------------------------------------------------------------------------#
 
 #tn_tract2 <- tn_tract %>% 
-tn_tract2 <- tn_tract %>% 
-  left_join(tract_vun_ranking_tn, by = "NAME")
-
-tn_tract2 <- tn_tract2 %>% select(c("NAME","weighted_vun","Divorced","n_lenders","total_population","avg_income_group","percent_noncitizen","total_percent_highschool","percent_veteran","percent_black","percent_hispaniclat","Unemployed","geometry","County"))
+# tn_tract2 <- tn_tract %>% 
+#   left_join(tract_vun_ranking_tn, by = "NAME")
+# 
+# tn_tract2 <- tn_tract2 %>% select(c("NAME","weighted_vun","Divorced","n_lenders","total_population","avg_income_group","percent_noncitizen","total_percent_highschool","percent_veteran","percent_black","percent_hispaniclat","Unemployed","geometry","County"))
 
 #FIND MIN MEDIAN MAX VULNERABLE TRACTS AND TABLE IT ON THE POSTER
 
