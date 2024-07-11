@@ -597,7 +597,7 @@ server <- function(input, output) {
         weight_divorced = input$weight_divorced,
         weight_unemployed = input$weight_unemployed,
         weight_black = input$weight_black,
-        weight_hispaniclat = input$weight_hispanicla 
+        weight_hispaniclat = input$weight_hispaniclat
       )
       # Storing the data frame in the reactive model_output_df variable
       model_output_df(model_results)
