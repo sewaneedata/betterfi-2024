@@ -1,11 +1,9 @@
 # The goal of this file is to generate a mappable polygon as well as our tn_tract  which is our main data file for both our model and dashboard
-#libraries
+#libraries, missing gsheet, readxl and googledrive if needed
 library(tidycensus)
 library(tidyverse)
 library(stringr)
-library(gsheet)
 library(readr)
-library(readxl)
 library(tmap)
 library(rnaturalearth)
 library(rnaturalearthdata)
@@ -13,49 +11,11 @@ library(rnaturalearthhires)
 library(sf)
 library(mapsapi)
 
-#set working directory
-# setwd("/Users/buchananlindsey/Desktop/buck_datalab/betterfi-2024/data")
-
-#load data for payday, title, and flex lenders
-payday_info <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1x9KSndXG_z2PusNq0ThaQF40VmzJ7G5A/edit?gid=1545321409#gid=1545321409")
-
-flex_info <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1x9KSndXG_z2PusNq0ThaQF40VmzJ7G5A/edit?gid=525051790#gid=525051790")
-
-title_info <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1x9KSndXG_z2PusNq0ThaQF40VmzJ7G5A/edit?gid=1401445265#gid=14014452650")
-
-#merge individual datasets into one
-total_info <- rbind(payday_info, title_info, flex_info) 
-total_info<-distinct(total_info, Street, .keep_all=TRUE)
-total_info <- total_info %>% 
-  rename(postal_code = `Postal Code`)
-
-#create full address
-total_info <- total_info %>% 
-  mutate(full_address = paste0(Street,", ",City)) %>% 
-  mutate(full_address = paste0(full_address,", ",State)) %>% 
-  mutate(full_address = paste0(full_address," ",postal_code))
-
-#Create Loan Type Column: displays Title, Payday, Flex, or combination of the three depending on if the loan location belongs to one or many of the initial datasets
-total_info <- total_info %>% 
-  mutate(loan_type = case_when(
-    Street %in% flex_info$Street & Street %in% title_info$Street & Street %in% payday_info$Street ~ "Flex, Title, Payday",
-    Street %in% flex_info$Street & Street %in% title_info$Street ~ "Flex, Title",
-    Street %in% flex_info$Street & Street %in% payday_info$Street ~ "Flex, Payday",
-    Street %in% title_info$Street & Street %in% payday_info$Street ~ "Flex, Payday",
-    Street %in% flex_info$Street ~ "Flex",
-    Street %in% payday_info$Street ~ "Payday",
-    Street %in% title_info$Street ~ "Title",
-    TRUE ~ NA_character_))
-
 #load coordinate data for all lenders
 load("data/total_lender_info.RData") 
 
 #load geography information
-tn_tract <- get_acs(geography = "tract",
-                    state = "TN",
-                    variables = "B01003_001",
-                    year = 2022,
-                    geometry = TRUE)
+tn_tract <- get_acs(geography = "tract",state = "TN",variables = "B01003_001",year = 2022,geometry = TRUE)
 
 #map for tn census tracts
 tmap_mode("view")
@@ -97,8 +57,8 @@ lenders_per_tract <- tn_lenders %>%
   tally( name = "n_lenders") %>%
   arrange( desc(n_lenders) )
 
-#left join lender_per_tract to tn geometry dataset
-tn_tract <- left_join( tn_tract, lenders_per_tract %>% rename( NAME = tract ), by = "NAME" )
+#merge lender_per_tract to tn geometry dataset
+tn_tract <- left_join( tn_tract, lenders_per_tract %>% rename( NAME = tract ), by = "NAME")
 
 #create lender heat map
 tm_shape( tn_tract ) + tm_polygons( col="n_lenders", id = "NAME")
@@ -121,18 +81,14 @@ tn_pop <- tn_pop %>%
 #match tract names with tn_tract
 tn_pop$NAME <-  gsub("!.*", "", tn_pop$NAME)#removing text starting with exclamation mark
 tn_pop$NAME <- gsub(",", ";", tn_pop$NAME) #replaces commas with a semicolon
-tn_pop <- tn_pop %>% select(NAME,total_population) #keeps only name and total population column
+tn_pop <- tn_pop %>% select(NAME,total_population) #keeps name and total population column
 
-#left_join population data to tn_tract
+#combine population data to tn_tract
 tn_tract <- tn_tract %>% 
   left_join(tn_pop, by = "NAME") 
 
 
-#### ACS Income Dataset
-# American Community Survey 
-# preparing dataset for merging
-# create average income for each census tract
-# Get ACS Income Data for Income
+#### American Community Survey Income Dataset
 acs_income_tn <- read_csv("data/tennessee/acs_income_tn.csv")
 acs_income_tn <- acs_income_tn %>% 
   select(-contains("Margin of Error")) %>% 
@@ -172,7 +128,7 @@ tn_tract<- tn_tract %>%
   ) ) %>% 
   mutate(avg_income_group=fct_reorder(factor(avg_income_group), avg_income, .na_rm = TRUE))#factor reorder for viewing ease, so that the key is ordered from lowest to highest
 
-#create chloropleth for income
+#create map for income
 tm_shape(tn_tract)+
   tm_polygons( col = "avg_income_group", id="NAME", palette = "Blues")
 
@@ -185,11 +141,11 @@ acs_citizen_tn <- read_csv("data/tennessee/acs_citizenship_tn.csv")
 acs_citizen_tn <- acs_citizen_tn %>% 
   select(-contains("Margin of Error"))
 
-#select citizen rows for left_join
+#select citizen rows for merging
 acs_citizen_tn1 <- acs_citizen_tn[2, ]
 acs_noncitizen_tn <- acs_citizen_tn[6, ]
 
-#pivot for left_join
+#flipping dataset to be formatted properly for merging
 acs_citizen_tn1 <- acs_citizen_tn1 %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "citizens") 
 acs_noncitizen_tn <- acs_noncitizen_tn %>% 
@@ -209,7 +165,7 @@ tn_tract <- tn_tract %>%
 tn_tract <- tn_tract %>% 
   left_join(acs_noncitizen_tn, by = "NAME") 
 
-#mutate %citizen and %noncitizen
+#create %citizen and %noncitizen columns
 tn_tract <- tn_tract %>% 
   mutate(percent_citizen = (citizens/total_population)*100) %>% 
   mutate(percent_noncitizen = (noncitizens/total_population)*100)%>% 
@@ -266,19 +222,17 @@ acs_edu_tn <- acs_edu_tn %>%
   mutate(`25NOhighschool` = as.numeric(`25NOhighschool`)) %>% 
   mutate(`25total` = as.numeric(`25total`)) 
 
-#mutate columns for 18 and 25 than HAVE GRADUATED HIGHSCHOOL
+#create columns for 18 and 25 than HAVE GRADUATED HIGHSCHOOL
 acs_edu_tn <-acs_edu_tn %>% 
   mutate(`18highschool` = `18total` - `18NOhighschool`) %>% 
   mutate(`25highschool` = `25total` - `25NOhighschool` - `25NO9th`)
 
-#mutate column for total pop and total highschool graduation pop
+#create column for total pop and total highschool graduation pop
 acs_edu_tn <- acs_edu_tn %>% 
   mutate(total_pop = `18total` + `25total`) %>% 
   mutate(total_highschool_pop = `25highschool` + `18highschool`)
-
 acs_edu_tn <- acs_edu_tn %>% 
   mutate(total_percent_highschool = (total_highschool_pop/total_pop)*100) 
-
 acs_edu_tn <- acs_edu_tn %>% 
   select("NAME", "total_percent_highschool")
 
@@ -332,15 +286,15 @@ acs_veteran_tn <- acs_veteran_tn %>%
   select(contains("Percent Veterans")) %>% 
   select(-contains("Margin of Error"))
 
-#pivot for left_join
+#flipping dataset around to format for merging
 acs_veteran_tn <- acs_veteran_tn %>% 
   pivot_longer(cols = starts_with("Census Tract"), names_to = "NAME", values_to = "percent_veteran")
 
-#clean NAME for left join
+#clean NAME column for merge
 acs_veteran_tn$NAME <-  gsub("!.*", "", acs_veteran_tn$NAME)
 acs_veteran_tn$NAME <- gsub(",", ";", acs_veteran_tn$NAME)
 
-#left_join veteran data
+#merge veteran data to main dataset
 tn_tract <- tn_tract %>% 
   left_join(acs_veteran_tn, by = "NAME")
 
@@ -380,8 +334,7 @@ tn_tract <- tn_tract %>%
 #creates mediangrossrent column on tn tract for the groups
 tn_tract <- tn_tract %>%
   mutate(
-    mediangrossrent = ifelse(mediangrossrent == '-' | is.na(mediangrossrent), NA, mediangrossrent)
-  )
+    mediangrossrent = ifelse(mediangrossrent == '-' | is.na(mediangrossrent), NA, mediangrossrent))
 
 #converts the mediangrossrent column to numeric
 tn_tract <- tn_tract %>%
@@ -401,16 +354,14 @@ tn_tract <- tn_tract %>%
     mediangrossrent >= 2000 & mediangrossrent < 2250 ~ "2000-2250",
     mediangrossrent >= 2250 & mediangrossrent < 2500 ~ "2250-2500",
     mediangrossrent >= 2500 ~ "2500+",
-    TRUE ~ NA_character_
-  ))
+    TRUE ~ NA_character_))
 
 #factor reorders by levels of rent, the exact scale i just made previously
 tn_tract <- tn_tract %>%
   mutate(mediangrossrent_group = factor(
     mediangrossrent_group,
     levels = c("<250", "250-500", "500-750", "750-1000", "1000-1250", 
-               "1250-1500", "1500-1750", "1750-2000", "2000-2250", "2250-2500", "2500+")
-  ))
+               "1250-1500", "1500-1750", "1750-2000", "2000-2250", "2250-2500", "2500+")))
 
 #creates the map based on how much each tract pays for median gross rent
 tm_shape(tn_tract) +
@@ -529,13 +480,13 @@ acs_nonhispanic_tn <- acs_nonhispanic_tn %>%
 acs_hispanic_tn <- acs_hispanic_tn %>% select(NAME,hispaniclat) 
 acs_nonhispanic_tn <- acs_nonhispanic_tn %>% select(NAME,nonhispaniclat)
 
-#clean NAME column for left_join into tn_tract
+#clean NAME column for merging into tn_tract
 acs_hispanic_tn$NAME <-  gsub("!.*", "", acs_hispanic_tn$NAME)
 acs_hispanic_tn$NAME <- gsub(",", ";", acs_hispanic_tn$NAME)
 acs_nonhispanic_tn$NAME <-  gsub("!.*", "", acs_nonhispanic_tn$NAME)
 acs_nonhispanic_tn$NAME <- gsub(",", ";", acs_nonhispanic_tn$NAME)
 
-#joins hispanic individuals dataset to the main dataset
+#joins hispanic or latino dataset to the main dataset
 tn_tract <- tn_tract %>% 
   left_join(acs_hispanic_tn, by = "NAME")
 
@@ -586,14 +537,12 @@ acs_emp_tn1 <- acs_emp_tn1 %>% select(-`Label (Grouping)`,-NAME) %>%
 tn_tract <- tn_tract %>% 
   left_join(acs_emp_tn1, by = c("NAME" = "censustract"))
 
-
 #renames the column added by the employment data to employedpercent
 tn_tract <- tn_tract %>% rename(employedpercent = Percent)
 
 #pivots wider with varname and value column
 acs_emp_tn2 <- acs_emp_tn2 %>% select(-`Label (Grouping)`,-NAME) %>% 
   pivot_wider(names_from=varname,values_from=values)
-
 
 #merges marital dataset with tn tract by name and censustract variables.
 tn_tract <- tn_tract %>% 
@@ -641,7 +590,7 @@ tn_tract_dash <- tn_tract_dash %>%
   mutate(percent_hispaniclat = as.numeric(percent_hispaniclat)) %>% 
   mutate(Unemployed = as.numeric(Unemployed)) 
 
-#MUTATE PERCENTILE/GROUPING COLUMNS FOR DASHBOARD MAPS
+#create PERCENTILE/GROUPING COLUMNS FOR DASHBOARD MAPS
 tn_tract_dash <- tn_tract_dash %>% 
   mutate(noncitizen_group = case_when(
     percent_noncitizen == 0 ~ "0%",
@@ -706,8 +655,7 @@ tn_tract_dash <- tn_tract_dash %>%
     Unemployed >= 5 & Unemployed < 10 ~ "5-10%",
     Unemployed >= 10 & Unemployed < 15 ~ "10-15%",
     Unemployed >= 15 & Unemployed <= 20 ~ "15-20%",
-    Unemployed > 20 ~ ">20%"
-  ))
+    Unemployed > 20 ~ ">20%"))
 
 #FACTOR REORDER GROUPING COLUMNS FOR BETTER LOOKING MAPS
 tn_tract_dash <- tn_tract_dash %>% 
