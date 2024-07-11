@@ -10,6 +10,10 @@ library(tidyverse)
 #call Dashboard Data
 load("../data/tennessee/tn_tract_dash.RData")
 
+# These NAs actually do represent zero so it should be fine to change them to 0
+tn_tract_dash <-tn_tract_dash %>% 
+  mutate(n_lenders = ifelse(is.na(n_lenders), 0, n_lenders))
+
 #define important variables 
 
 #creates a vector containing all unique county names, as well an option called All
@@ -345,8 +349,12 @@ server <- function(input, output, session) {
   
   #GRAPHS - UPDATES Y VAR LSIT TO REMOVE SELECTED X VAR
   output$graph_yvar <- renderUI({
-    selectizeInput("graph_yvar", "Select Y Variable",
-                   choices = graph_vars[graph_vars != input$graph_xvar])
+    selectizeInput(
+      "graph_yvar",
+      "Select Y Variable",
+      choices = graph_vars[graph_vars != input$graph_xvar],
+      selected = input$graph_yvar
+    )
   })
   
   output$graph <- renderPlot({
@@ -409,14 +417,14 @@ server <- function(input, output, session) {
           # Otherwise, set the max to 1 minus the sum of the other weights
           max = ifelse(
             is.null(input[[variable]]),
-            1 - weight_sum(),
+            1,
             1 - (weight_sum() - input[[variable]])
           ),
           # If the input weight is null because it hasn't been loaded yet or if the variable input
           # is not just "All", set it equal to 0, otherwise, set it equal to itself so that it
           # doesn't get reset to 0 when other weight inputs change
           value = ifelse(
-            is.null(input[[variable]]) | !("All" %in% input$vars & length(input$vars == 1)),
+            is.null(input[[variable]]) | (!variable %in% input$vars & !("All" %in% input$vars & length(input$vars == 1))),
             0,
             input[[variable]]
           ),
@@ -444,56 +452,42 @@ server <- function(input, output, session) {
     }
   })
   
-  observeEvent(weight_sum(), {
-    print(paste0("Weight Sum = ", weight_sum()))
-  })
-  
-  observeEvent(
-    input$weight_lender |
-      input$weight_income |
-      input$weight_noncitizen |
-      input$weight_highschool |
-      input$weight_veteran |
-      input$weight_mediangrossrent |
-      input$weight_divorced |
-      input$weight_unemployed |
-      input$weight_black |
-      input$weight_hispaniclat,
-    {
-      print("Input Weight Changes Detected:")
-      print(paste0("Weight Income = ", input$weight_income))
-      print(paste0("Weight Lender = ", input$weight_lender))
-      print(paste0("Weight Noncitizen = ", input$weight_noncitizen))
-      print(paste0("Weight Highschool = ", input$weight_highschool))
-      print(paste0("Weight Veteran = ", input$weight_veteran))
-      print(paste0("Weight Mediangrossrent = ", input$weight_mediangrossrent))
-      print(paste0("Weight Divorced = ", input$weight_divorced))
-      print(paste0("Weight Unemployed = ", input$weight_unemployed))
-      print(paste0("Weight Black = ", input$weight_black))
-      print(paste0("Weight Hispaniclat = ", input$weight_hispaniclat))
-    }
-  )
+  # observeEvent(weight_sum(), {
+  #   print(paste0("Weight Sum = ", weight_sum()))
+  # })
+  # 
+  # observeEvent(
+  #   input$weight_lender |
+  #     input$weight_income |
+  #     input$weight_noncitizen |
+  #     input$weight_highschool |
+  #     input$weight_veteran |
+  #     input$weight_mediangrossrent |
+  #     input$weight_divorced |
+  #     input$weight_unemployed |
+  #     input$weight_black |
+  #     input$weight_hispaniclat,
+  #   {
+  #     print("Input Weight Changes Detected:")
+  #     print(paste0("Weight Income = ", input$weight_income))
+  #     print(paste0("Weight Lender = ", input$weight_lender))
+  #     print(paste0("Weight Noncitizen = ", input$weight_noncitizen))
+  #     print(paste0("Weight Highschool = ", input$weight_highschool))
+  #     print(paste0("Weight Veteran = ", input$weight_veteran))
+  #     print(paste0("Weight Mediangrossrent = ", input$weight_mediangrossrent))
+  #     print(paste0("Weight Divorced = ", input$weight_divorced))
+  #     print(paste0("Weight Unemployed = ", input$weight_unemployed))
+  #     print(paste0("Weight Black = ", input$weight_black))
+  #     print(paste0("Weight Hispaniclat = ", input$weight_hispaniclat))
+  #   }
+  # )
   
   # Equal Weight Button
   observeEvent(input$equal_weight_button, {
     # Set all of the weights to 0 first
     for(variable in model_vars[model_vars != "All"]) {
       updateSliderInput(session, variable, value = 0)
-      # print(1 - (weight_sum() - input[[variable]]))
     }
-    # while(weight_sum() != 0) {
-    #   print("Weight sum is not zero yet!")
-    # }
-    
-    # # Force the weight sum to update:
-    # # Vector of the weight values
-    # weights <- c()
-    # # Adding the inputted weights to the weights vector
-    # for(variable in model_vars[model_vars != "All"]) {
-    #   weights <- append(weights, input[[variable]])
-    # }
-    # # Setting the weight_sum variable to the sum of the weights
-    # weight_sum(sum(weights))
     
     # If "All" is the only option selected, set all values equally
     if(length(input$vars) == 1 && "All" %in% input$vars) {
@@ -501,16 +495,14 @@ server <- function(input, output, session) {
       equal_val <- 1/length(model_vars[model_vars != "All"])
       # Setting the weights
       for(variable in model_vars[model_vars != "All"]) {
-        updateSliderInput(session, variable, value = equal_val)
-        # print(paste0(variable, " = ", input[[variable]]))
+        updateSliderInput(session, variable, value = equal_val, max = 1)
       }
     } else {
       # Calculating the equal weight based on selected variables
       equal_val <- 1/length(input$vars[input$vars != "All"])
       # Setting the weights
       for(variable in input$vars[input$vars != "All"]) {
-        updateSliderInput(session, variable, value = equal_val)
-        # print(paste0(variable, " = ", input[[variable]]))
+        updateSliderInput(session, variable, value = equal_val, max = 1)
       }
     }
   })
@@ -520,7 +512,6 @@ server <- function(input, output, session) {
     # Set all weights to 0
     for(variable in model_vars[model_vars != "All"]) {
       updateSliderInput(session, variable, value = 0)
-      print(input[[variable]])
     }
   })
   
