@@ -1,46 +1,15 @@
 # Stop Predatory Lending
+## What is Predatory Lending and who is BetterFi?
+The Federal Consumer Protection Bureau estimates that, on average, 12 million Americans each year will take out predatory loans to cover an emergency expense. Predatory lending is a practice that takes advantage of low-income communities by exploiting their need for quick cash. Many lenders provide short-term loans that tend to be misleading and often have interest rates over 300%. These loans lead to a cycle of debt and only create more financial stress on the borrowers. 
 
-BetterFiDashBoard - Folder that holds our dashboard
+We have partnered with BetterFi, a non-profit Community Development Financial Institution organization that offers affordable installment loans and coaching to help individuals break free from debt traps and become financially independent. We are working with BetterFi to combat the predatory lending crisis in Hamilton and Rutherford counties by determining the most susceptible areas in these counties. 
 
-tasks - holds our problem statement
+## 
 
-.Rapp.history - 
+## 
 
-.gitignore - what files git ignores
+## 
 
-BuckData.R - file for exploring data and merging variable csv datasets into a main one
+## 
 
-Dashboard.R - file for exploring what a dashboard could be
-
-Data.R - file using lender info and getting geospatial data
-
-GavinData.R - file for exploring data and examining lender data & firm ownership
-
-MODELBUILD.R - this file is for our model to determine the most vulnerable census tracts in tennessee
-
-README.md - this is our readme file
-
-betterfi-2024.Rproj - this is our rproject file
-
-betterfi_problem_statement.Rmd - this is our problem statement
-
-bucktennesseedata.R - data for exploring and merging tn datasets into a final dataset
-
-first_data.R - first r script, tried using tidygeocoder library
-
-hamiltonmain.R - file for trying to explore data for hamilton county
-
-kmj hamilton graphs.R - file for trying to make graphs for our poster
-
-kyledata.R - file for merging census datasets
-
-ramzy_tn.R - file for exploring data for tn
-
-ramzydata.R - file for exploring data
-
-tennesseemain.R - file for merging all of our tennessee datasets into a final tn_data datasets
-
-tn_data.RData - tn census variables per census tract dataset
-
-total_lender_info.RData - dataset for lender info
-
+## 
