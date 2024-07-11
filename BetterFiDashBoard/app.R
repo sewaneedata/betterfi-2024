@@ -322,6 +322,7 @@ ui <- fluidPage(
                       actionButton("model_button", "Click to Run Model")),
                actionButton("reset_button", "Click to Reset the Weights"),
                actionButton("equal_weight_button", "Click to set the Weights Equally"),
+               actionButton("reset_county", "Click to Reset County"),
                # tableOutput("model_dt"),
                conditionalPanel(
                  condition = "output.model_output_df != NULL",
@@ -585,6 +586,15 @@ server <- function(input, output, session) {
   output$model_dt <- renderDT(
     model_output_df()
   )
+  
+  observeEvent(input$reset_county,{
+    updateSelectizeInput(
+      session,
+      "model_counties", 
+      choices = county_names, 
+      selected = "All"
+    )
+  })
 }
 
 
