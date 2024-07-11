@@ -444,6 +444,36 @@ server <- function(input, output, session) {
     }
   })
   
+  observeEvent(weight_sum(), {
+    print(paste0("Weight Sum = ", weight_sum()))
+  })
+  
+  observeEvent(
+    input$weight_lender |
+      input$weight_income |
+      input$weight_noncitizen |
+      input$weight_highschool |
+      input$weight_veteran |
+      input$weight_mediangrossrent |
+      input$weight_divorced |
+      input$weight_unemployed |
+      input$weight_black |
+      input$weight_hispaniclat,
+    {
+      print("Input Weight Changes Detected:")
+      print(paste0("Weight Income = ", input$weight_income))
+      print(paste0("Weight Lender = ", input$weight_lender))
+      print(paste0("Weight Noncitizen = ", input$weight_noncitizen))
+      print(paste0("Weight Highschool = ", input$weight_highschool))
+      print(paste0("Weight Veteran = ", input$weight_veteran))
+      print(paste0("Weight Mediangrossrent = ", input$weight_mediangrossrent))
+      print(paste0("Weight Divorced = ", input$weight_divorced))
+      print(paste0("Weight Unemployed = ", input$weight_unemployed))
+      print(paste0("Weight Black = ", input$weight_black))
+      print(paste0("Weight Hispaniclat = ", input$weight_hispaniclat))
+    }
+  )
+  
   # Equal Weight Button
   observeEvent(input$equal_weight_button, {
     # Set all of the weights to 0 first
@@ -472,7 +502,7 @@ server <- function(input, output, session) {
       # Setting the weights
       for(variable in model_vars[model_vars != "All"]) {
         updateSliderInput(session, variable, value = equal_val)
-        print(paste0(variable, " = ", input[[variable]]))
+        # print(paste0(variable, " = ", input[[variable]]))
       }
     } else {
       # Calculating the equal weight based on selected variables
@@ -480,7 +510,7 @@ server <- function(input, output, session) {
       # Setting the weights
       for(variable in input$vars[input$vars != "All"]) {
         updateSliderInput(session, variable, value = equal_val)
-        print(paste0(variable, " = ", input[[variable]]))
+        # print(paste0(variable, " = ", input[[variable]]))
       }
     }
   })
