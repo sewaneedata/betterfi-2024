@@ -8,10 +8,13 @@ library(stringr)
 library(tmap)
 library(DT)
 library(tidyverse)
+library(bslib)
+library(reshape2)
+library(bsicons)
 
 #call Dashboard Data
 load("../data/tennessee/tn_tract_dash.RData")
-
+tn_tract_dash <-tn_tract_dash %>%  mutate(n_lenders = ifelse(is.na(n_lenders), 0, n_lenders))
 #define important variables 
 
 #creates a vector containing all unique county names, as well an option called All
@@ -74,7 +77,8 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
   #n_lenders
   varlist_lenders <- tn_tract_filtered %>% 
     select("NAME", "n_lenders", "county") %>% 
-    mutate(max_lender = max(n_lenders, na.rm = TRUE)) %>% 
+    #mutate(n_lenders = ifelse(is.na(n_lenders), 0, n_lenders)) %>%  
+    mutate(max_lender = max(n_lenders)) %>% 
     mutate(vun_lender = n_lenders/max_lender) %>% 
     arrange(desc(vun_lender)) %>% 
     select("NAME", "vun_lender", "county") %>% 
@@ -193,6 +197,10 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
 
 # Define UI for application 
 ui <- fluidPage(
+  theme = bslib::bs_theme(bootswatch = "simplex"),
+  # [1] "cerulean"  "cosmo"     "cyborg"    "darkly"    "flatly"    "journal"   "litera"    "lumen"     "lux"       "materia"  
+  #[11] "minty"     "morph"     "pulse"     "quartz"    "sandstone" "simplex"   "sketchy"   "slate"     "solar"     "spacelab" 
+  #[21] "superhero" "united"    "vapor"     "yeti"      "zephyr"
   #TITLE FOR DASHBOARD
   titlePanel("BetterFi Interactive Dashboard"),
   
@@ -273,7 +281,7 @@ ui <- fluidPage(
                       selectizeInput(
                         inputId = "vars",
                         label = "Select Desired Variables",
-                        choices = c("All", "Number Of Predatory Lenders", "Average Income", "Percentage Noncitizen", "Highschool Graduation Rate", "Percentage Of Veterans", "Median Gross Rent", "Percentage Divorced", "Unemployment Rate", "Percantage African American", "Percentage Hispanic/Latino"),
+                        choices = c("All", "Number Of Predatory Lenders", "Average Income", "Percentage Noncitizen", "Highschool Graduation Rate", "Percentage Of Veterans", "Median Gross Rent", "Percentage Divorced", "Unemployment Rate", "Percentage African American", "Percentage Hispanic/Latino"),
                         multiple = TRUE,
                         selected = c("All")
                       ),
@@ -300,7 +308,7 @@ ui <- fluidPage(
                       ),
                       # This only pops up if variable 5 is selected
                       conditionalPanel(
-                        condition = "input.vars.includes('Percentage Veteran') || (input.vars.includes('All') && input.vars.length == 1)",
+                        condition = "input.vars.includes('Percentage Of Veterans') || (input.vars.includes('All') && input.vars.length == 1)",
                         uiOutput("weight_veteran"),
                       ),
                       # This only pops up if variable 6 is selected
@@ -320,7 +328,7 @@ ui <- fluidPage(
                       ),
                       # This only pops up if variable 9 is selected
                       conditionalPanel(
-                        condition = "input.vars.includes('Percantage African American') || (input.vars.includes('All') && input.vars.length == 1)",
+                        condition = "input.vars.includes('Percentage African American') || (input.vars.includes('All') && input.vars.length == 1)",
                         uiOutput("weight_black"),
                       ),
                       # This only pops up if variable 10 is selected
@@ -330,7 +338,11 @@ ui <- fluidPage(
                       )
                ),
                column(9, 
-                      actionButton("model_button", "Click to Run Model")),
+                      actionButton("model_button", "Click to Run Model"),
+                      actionButton("reset_button", "Click to Reset Weights"),
+                      actionButton("equal_weight_button", "Click to Assign Equal Weights"),
+                      actionButton("reset_county", "Click to Reset County")
+               ),
                # tableOutput("model_dt"),
                conditionalPanel(
                  condition = "output.model_output_df != NULL",
@@ -350,8 +362,6 @@ ui <- fluidPage(
 )
 
 
-
-
 # Define server logic 
 server <- function(input, output, session) {
   #GRAPH SERVER=================================================================
@@ -359,7 +369,9 @@ server <- function(input, output, session) {
   #GRAPHS - UPDATES Y VAR LSIT TO REMOVE SELECTED X VAR
   output$graph_yvar <- renderUI({
     selectizeInput("graph_yvar", "Select Y Variable",
-                   choices = graph_vars[graph_vars != input$graph_xvar])
+                   choices = graph_vars[graph_vars != input$graph_xvar],
+                   selected = input$graph_yvar
+    )
   })
   
   output$graph <- renderPlot({
@@ -439,7 +451,7 @@ server <- function(input, output, session) {
       if(!"Unemployment Rate" %in% input$vars) {
         updateSliderInput(session, "weight_unemployed", value = 0)
       }
-      if(!"Percantage African American" %in% input$vars) {
+      if(!"Percentage African American" %in% input$vars) {
         updateSliderInput(session, "weight_black", value = 0)
       }
       if(!"Percentage Hispanic/Latino" %in% input$vars) {
@@ -448,6 +460,68 @@ server <- function(input, output, session) {
     }
   })
   
+  # Equal Weight Button
+  observeEvent(input$equal_weight_button, {
+    if(length(input$vars) == 1 && "All" %in% input$vars) {
+      equal_val <- 1/10
+      updateSliderInput(session, "weight_lender", value = equal_val)
+      updateSliderInput(session, "weight_income", value = equal_val)
+      updateSliderInput(session, "weight_noncitizen", value = equal_val)
+      updateSliderInput(session, "weight_highschool", value = equal_val)
+      updateSliderInput(session, "weight_veteran", value = equal_val)
+      updateSliderInput(session, "weight_mediangrossrent", value = equal_val)
+      updateSliderInput(session, "weight_divorced", value = equal_val)
+      updateSliderInput(session, "weight_unemployed", value = equal_val)
+      updateSliderInput(session, "weight_black", value = equal_val)
+      updateSliderInput(session, "weight_hispaniclat", value = equal_val)
+    } else {
+      equal_val <- 1/length(input$vars[input$vars != "All"])
+      if("Number Of Predatory Lenders" %in% input$vars) {
+        updateSliderInput(session, "weight_lender", value = equal_val)
+      }
+      if("Average Income" %in% input$vars) {
+        updateSliderInput(session, "weight_income", value = equal_val)
+      }
+      if("Percentage Noncitizen" %in% input$vars) {
+        updateSliderInput(session, "weight_noncitizen", value = equal_val)
+      }
+      if("Highschool Graduation Rate" %in% input$vars) {
+        updateSliderInput(session, "weight_highschool", value = equal_val)
+      }
+      if("Percentage Of Veterans" %in% input$vars) {
+        updateSliderInput(session, "weight_veteran", value = equal_val)
+      }
+      if("Median Gross Rent" %in% input$vars) {
+        updateSliderInput(session, "weight_mediangrossrent", value = equal_val)
+      }
+      if("Percentage Divorced" %in% input$vars) {
+        updateSliderInput(session, "weight_divorced", value = equal_val)
+      }
+      if("Unemployment Rate" %in% input$vars) {
+        updateSliderInput(session, "weight_unemployed", value = equal_val)
+      }
+      if("Percentage African American" %in% input$vars) {
+        updateSliderInput(session, "weight_black", value = equal_val)
+      }
+      if("Percentage Hispanic/Latino" %in% input$vars) {
+        updateSliderInput(session, "weight_hispaniclat", value = equal_val)
+      }
+    }
+  })
+  
+  # Reset Weight Button
+  observeEvent(input$reset_button, {
+    updateSliderInput(session, "weight_lender", value = 0)
+    updateSliderInput(session, "weight_income", value = 0)
+    updateSliderInput(session, "weight_noncitizen", value = 0)
+    updateSliderInput(session, "weight_highschool", value = 0)
+    updateSliderInput(session, "weight_veteran", value = 0)
+    updateSliderInput(session, "weight_mediangrossrent", value = 0)
+    updateSliderInput(session, "weight_divorced", value = 0)
+    updateSliderInput(session, "weight_unemployed", value = 0)
+    updateSliderInput(session, "weight_black", value = 0)
+    updateSliderInput(session, "weight_hispaniclat", value = 0)
+  })
   
   # This is a reactive value that will store the sum of the weights and update as input changes
   weight_sum <- reactiveVal(0)
@@ -570,10 +644,10 @@ server <- function(input, output, session) {
   output$weight_black <- renderUI({
     sliderInput(
       inputId = "weight_black",
-      label = "Percent African American",
+      label = "Percentage African American",
       min = 0,
       max = ifelse(is.null(input$weight_black), 1, 1 - (weight_sum() - input$weight_black)),
-      value = ifelse(is.null(input$weight_black) | (!"Percent African American" %in% input$vars & !"All" %in% input$vars & length(input$vars != 1)), 0, input$weight_black),
+      value = ifelse(is.null(input$weight_black) | (!"Percentage African American" %in% input$vars & !"All" %in% input$vars & length(input$vars != 1)), 0, input$weight_black),
       step = 0.01
     )
   })
@@ -581,10 +655,10 @@ server <- function(input, output, session) {
   output$weight_hispaniclat <- renderUI({
     sliderInput(
       inputId = "weight_hispaniclat",
-      label = "Percent Hispanic/Latino",
+      label = "Percentage Hispanic/Latino",
       min = 0,
       max = ifelse(is.null(input$weight_hispaniclat), 1, 1 - (weight_sum() - input$weight_hispaniclat)),
-      value = ifelse(is.null(input$weight_hispaniclat) | (!"Percent Hispanic/Latino" %in% input$vars & !"All" %in% input$vars & length(input$vars != 1)), 0, input$weight_hispaniclat),
+      value = ifelse(is.null(input$weight_hispaniclat) | (!"Percentage Hispanic/Latino" %in% input$vars & !"All" %in% input$vars & length(input$vars != 1)), 0, input$weight_hispaniclat),
       step = 0.01
     )
   })
@@ -646,6 +720,13 @@ server <- function(input, output, session) {
   output$model_dt <- renderDT(
     model_output_df()
   )
+  
+  observeEvent(input$reset_county,{
+    updateSelectizeInput(session, "model_counties", 
+                         choices = county_names, 
+                         selected = "All")
+  })
+  
 }
 
 
