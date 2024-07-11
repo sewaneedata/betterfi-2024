@@ -353,7 +353,7 @@ ui <- fluidPage(
 
 
 # Define server logic 
-server <- function(input, output) {
+server <- function(input, output, session) {
   #GRAPH SERVER=================================================================
   
   #GRAPHS - UPDATES Y VAR LSIT TO REMOVE SELECTED X VAR
@@ -411,6 +411,44 @@ server <- function(input, output) {
   
   
   #MODEL SERVER===================================================================
+  # This changes the input weights to 0 if they become unselected
+  variable_selection_observer <- observe({
+    # If All isn't the only selected option
+    if(!(length(input$vars) == 1 && "All" %in% input$vars)) {
+      if(!"Number Of Predatory Lenders" %in% input$vars) {
+        updateSliderInput(session, "weight_lender", value = 0)
+      }
+      if(!"Average Income" %in% input$vars) {
+        updateSliderInput(session, "weight_income", value = 0)
+      }
+      if(!"Percentage Noncitizen" %in% input$vars) {
+        updateSliderInput(session, "weight_noncitizen", value = 0)
+      }
+      if(!"Highschool Graduation Rate" %in% input$vars) {
+        updateSliderInput(session, "weight_highschool", value = 0)
+      }
+      if(!"Percentage Of Veterans" %in% input$vars) {
+        updateSliderInput(session, "weight_veteran", value = 0)
+      }
+      if(!"Median Gross Rent" %in% input$vars) {
+        updateSliderInput(session, "weight_mediangrossrent", value = 0)
+      }
+      if(!"Percentage Divorced" %in% input$vars) {
+        updateSliderInput(session, "weight_divorced", value = 0)
+      }
+      if(!"Unemployment Rate" %in% input$vars) {
+        updateSliderInput(session, "weight_unemployed", value = 0)
+      }
+      if(!"Percantage African American" %in% input$vars) {
+        updateSliderInput(session, "weight_black", value = 0)
+      }
+      if(!"Percentage Hispanic/Latino" %in% input$vars) {
+        updateSliderInput(session, "weight_hispaniclat", value = 0)
+      }
+    }
+  })
+  
+  
   # This is a reactive value that will store the sum of the weights and update as input changes
   weight_sum <- reactiveVal(0)
   
