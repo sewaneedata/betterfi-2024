@@ -11,6 +11,7 @@ library(rnaturalearthhires)
 library(sf)
 library(mapsapi)
 
+
 #load coordinate data for all lenders
 load("data/total_lender_info.RData") 
 
@@ -19,13 +20,13 @@ tn_tract <- get_acs(geography = "tract",state = "TN",variables = "B01003_001",ye
 
 #map for tn census tracts
 tmap_mode("view")
-tm_shape(tn_tract)+
-  tm_polygons()
+# tm_shape(tn_tract)+
+#   tm_polygons()
 
 #create tn Polygon
 tn_poly <- st_union(tn_tract$geometry)
-tm_shape(tn_poly)+
-  tm_polygons()
+# tm_shape(tn_poly)+
+#   tm_polygons()
 
 #check which points are in tn_polygon
 points <- total_lender_info$pnt
@@ -36,10 +37,10 @@ tn_lenders <- total_lender_info %>%
 
 #create map for tn county lenders overlayed on tn county limits
 tmap_mode("view")
-tm_shape(tn_lenders)+ 
-  tm_dots()+
-  tm_shape(tn_tract)+
-  tm_polygons(alpha = 0.5)
+# tm_shape(tn_lenders)+ 
+#   tm_dots()+
+#   tm_shape(tn_tract)+
+#   tm_polygons(alpha = 0.5)
 
 #count lenders in each census tract
 st_crs(tn_tract$geometry) <- st_crs(tn_lenders$pnt)
@@ -61,12 +62,49 @@ lenders_per_tract <- tn_lenders %>%
 tn_tract <- left_join( tn_tract, lenders_per_tract %>% rename( NAME = tract ), by = "NAME")
 
 #create lender heat map
-tm_shape( tn_tract ) + tm_polygons( col="n_lenders", id = "NAME")
+# tm_shape( tn_tract ) + tm_polygons( col="n_lenders", id = "NAME")
 #makes it so you can open our large tn state datasets
 Sys.setenv("VROOM_CONNECTION_SIZE"=5000000)
 
 
-#### Total Population Dataset
+#create dataframe showing numeber of lenders within 5 miles of each lender cooridnate point
+#create vector with point empty in it , used for filtering empty geomspacial points
+point_empty <- "POINT EMPTY"
+
+#create dataframe containing circles for each lender location
+tn_lender_circle <- tn_lenders %>% 
+  select("address", "pnt") %>%
+  
+  #get rid of empty points
+  filter(!st_is_empty(pnt)) %>% 
+  
+  #creates point_circle column, initially containing just the lender coords
+  mutate(point_circle = st_transform(pnt, crs = 3857)) %>% 
+  
+  #create radius/buffer zone around each coordinate, in meters
+  mutate(point_circle = st_buffer(point_circle, dist = (16093.4/4))) %>% 
+  
+  #transform new geospatial data back into working crs
+  mutate(point_circle = st_transform(point_circle, crs = 4326)) %>% 
+  select("point_circle")
+
+#map of new lender location circles
+# tm_shape(tn_lender_circle$point_circle)+
+#    tm_polygons(alpha = 0.5)
+
+#now count how many number of lender circles that intersect with every census tract
+#set matching CRS for the circles and the census tracts geometry
+st_crs(tn_tract$geometry) <- st_crs(tn_lender_circle$point_circle)
+
+#creates matrix containing data on which circles intersect with which census tracts
+m_circle <- st_intersects( tn_lender_circle$point_circle, tn_tract, sparse=FALSE )
+# idx provides the row of the census tract for the given lender
+idx_circle <- apply(m_circle, 2, sum)
+# now get the corresponding census tract names 
+tn_tract$num_lender_circles <- idx_circle
+
+
+  #### Total Population Dataset
 #load total pop data
 tn_pop <- read_csv("data/tennessee/acs_totalpop_tn.csv")
 
@@ -129,8 +167,8 @@ tn_tract<- tn_tract %>%
   mutate(avg_income_group=fct_reorder(factor(avg_income_group), avg_income, .na_rm = TRUE))#factor reorder for viewing ease, so that the key is ordered from lowest to highest
 
 #create map for income
-tm_shape(tn_tract)+
-  tm_polygons( col = "avg_income_group", id="NAME", palette = "Blues")
+# tm_shape(tn_tract)+
+#   tm_polygons( col = "avg_income_group", id="NAME", palette = "Blues")
 
 
 #### Citizenship and Nativity Dataset
@@ -364,19 +402,19 @@ tn_tract <- tn_tract %>%
                "1250-1500", "1500-1750", "1750-2000", "2000-2250", "2250-2500", "2500+")))
 
 #creates the map based on how much each tract pays for median gross rent
-tm_shape(tn_tract) +
-  tm_polygons(
-    col = "mediangrossrent_group",
-    id = "NAME",
-    palette = "Blues",
-    title = "Median Gross Rent"
-  ) +
-  tm_layout(
-    legend.title.size = 1,
-    legend.text.size = 0.8,
-    legend.position = c("left", "bottom")
-  ) +
-  tm_borders(alpha = 0.5)
+# tm_shape(tn_tract) +
+#   tm_polygons(
+#     col = "mediangrossrent_group",
+#     id = "NAME",
+#     palette = "Blues",
+#     title = "Median Gross Rent"
+#   ) +
+#   tm_layout(
+#     legend.title.size = 1,
+#     legend.text.size = 0.8,
+#     legend.position = c("left", "bottom")
+#   ) +
+#   tm_borders(alpha = 0.5)
 
 
 #### Race Dataset
@@ -578,7 +616,7 @@ tn_tract_dash$Divorced <- gsub("%", "", tn_tract_dash$Divorced)
 
 #ENSURE ALL COLUMN THAT SHOULD BE NUMERIC ARE NUMERIC
 tn_tract_dash <- tn_tract_dash %>% 
-  mutate(n_lenders = as.numeric(n_lenders)) %>% 
+  mutate(num_lender_circles = as.numeric(num_lender_circles)) %>% 
   mutate(total_population = as.numeric(total_population)) %>% 
   mutate(avg_income = as.numeric(avg_income)) %>% 
   mutate(percent_noncitizen = as.numeric(percent_noncitizen)) %>% 
@@ -671,8 +709,10 @@ tn_tract_dash <- tn_tract_dash %>%
 
 #TEST MAP
 tmap_mode("view")
-tm_shape(tn_tract_dash %>% filter(county == "ShelbyCounty"))+
-  tm_polygons(col = "geometry", palette = "YlOrRd")
+# tm_shape(tn_tract_dash %>% filter(county == "ShelbyCounty"))+
+#   tm_polygons(col = "geometry", palette = "YlOrRd")
 
 #SAVE DASHBOARD DATA
+tn_tract_dash <- tn_tract_dash %>% 
+  select(-"n_lenders")
 save(tn_tract_dash, file = "data/tennessee/tn_tract_dash.RData")
