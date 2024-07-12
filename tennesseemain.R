@@ -693,7 +693,18 @@ tn_tract_dash <- tn_tract_dash %>%
     Unemployed >= 5 & Unemployed < 10 ~ "5-10%",
     Unemployed >= 10 & Unemployed < 15 ~ "10-15%",
     Unemployed >= 15 & Unemployed <= 20 ~ "15-20%",
-    Unemployed > 20 ~ ">20%"))
+    Unemployed > 20 ~ ">20%")) %>% 
+  mutate(lender_group = case_when(
+    num_lender_circles == 0 ~ "0",
+    num_lender_circles >= 1 & num_lender_circles <= 5 ~ "1-5",
+    num_lender_circles >= 6 & num_lender_circles <= 10 ~ "6-10",
+    num_lender_circles >= 11 & num_lender_circles <= 15 ~ "11-15",
+    num_lender_circles >= 16 & num_lender_circles <=20  ~ "16-20",
+    num_lender_circles >= 21 & num_lender_circles <= 25 ~ "21-25",
+    num_lender_circles >= 26 & num_lender_circles <= 30 ~ "26-30",
+    num_lender_circles >= 31 & num_lender_circles <= 35 ~ "31-35",
+    num_lender_circles >= 36 & num_lender_circles <= 40 ~ "36-40",
+    num_lender_circles > 41 ~ ">41"))
 
 #FACTOR REORDER GROUPING COLUMNS FOR BETTER LOOKING MAPS
 tn_tract_dash <- tn_tract_dash %>% 
@@ -705,7 +716,8 @@ tn_tract_dash <- tn_tract_dash %>%
   mutate(unemployed_group=fct_reorder(factor(unemployed_group),(Unemployed))) %>%
   mutate(highschool_group=fct_reorder(factor(highschool_group),desc(total_percent_highschool))) %>%
   mutate(divorced_group=fct_reorder(factor(divorced_group),(Divorced))) %>%
-  mutate(mediangrossrent_group=fct_reorder(factor(mediangrossrent_group),desc(mediangrossrent)))
+  mutate(mediangrossrent_group=fct_reorder(factor(mediangrossrent_group),desc(mediangrossrent))) %>% 
+  mutate(lender_group = fct_reorder(factor(lender_group),(num_lender_circles)))
 
 #TEST MAP
 tmap_mode("view")
