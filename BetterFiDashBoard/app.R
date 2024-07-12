@@ -302,7 +302,8 @@ ui <- fluidPage(
                column(6,
                       selectizeInput("county_map", "Select County",
                                      choices = county_names,
-                                     selected = "Hamilton County")
+                                     selected = "Hamilton County",
+                                     multiple = TRUE)
                ),
              ),
              #output for user generated map
@@ -382,7 +383,7 @@ ui <- fluidPage(
         "graph_yvar",
         "Select Y Variable",
         choices = graph_vars[graph_vars != input$graph_xvar],
-        selected = "mediangrossrent"
+        selected = input$graph_yvar
       )
     })
     
