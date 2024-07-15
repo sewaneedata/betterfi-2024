@@ -82,7 +82,7 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
   if(weight_hispaniclat!= 0) selected_vars <- append(selected_vars, "vun_hispaniclat")
   
   # Filter for only counties that the user has selected
-  # counties <- c("Hamilton County")
+  #counties <- c("Hamilton County")
   tn_tract_filtered <- tn_tract_dash %>% 
     filter(county %in% counties)
   
@@ -228,7 +228,30 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
   
   model_results <- varlist_vun %>% 
     select(NAME, weighted_vun, county, any_of(selected_vars)) %>% 
-    arrange(desc(weighted_vun))
+    arrange(desc(weighted_vun)) %>% 
+    rename(`Census Tract` = NAME) %>% 
+    rename(`Weighted Vulnerability Score` = weighted_vun)
+  
+  if('vun_lender' %in% names(model_results))
+  {model_results <- model_results %>% rename(`Lender Vulnerability` = vun_lender)}
+  if('vun_noncitizen' %in% names(model_results))
+  {model_results <- model_results %>% rename(`Noncitizen Vulnerability` = vun_noncitizen)}
+  if('vun_highschool' %in% names(model_results))
+  {model_results <- model_results %>% rename(`Highschool Vulnerability` = vun_highschool)}
+  if('vun_veteran' %in% names(model_results))
+  {model_results <- model_results %>% rename(`Veteran Vulnerability` = vun_veteran)}
+  if('vun_mediangrossrent' %in% names(model_results))
+  {model_results <- model_results %>% rename(`Median Gross Rent Vulnerability` = vun_mediangrossrent)}
+  if('vun_divorced' %in% names(model_results))
+  {model_results <- model_results %>% rename(`Divorced Vulnerability` = vun_divorced)}
+  if('vun_unemployed' %in% names(model_results))
+  {model_results <- model_results %>% rename(`Unemployment Vulnerability` = vun_unemployed)}
+  if('vun_black' %in% names(model_results))
+  {model_results <- model_results %>% rename(`African American Vulnerability` = vun_black)}
+  if('vun_hispaniclat' %in% names(model_results))
+  {model_results <- model_results %>% rename(`Hispanic/Latino Vulnerability` = vun_hispaniclat)}
+  if('vun_income' %in% names(model_results))
+  {model_results <- model_results %>% rename(`Income Vulnerability` = vun_income)}
   
   
   # Spit out results -- name it model_results
@@ -248,7 +271,33 @@ ui <- fluidPage(
     "Dashboard Tabs",
     #INTRO PANNEL UI------------------------------------------------------------
     tabPanel("Introduction",
-             h3("Introduction")
+             h2("Introduction"),
+             fluidRow(
+               column(10,
+                      "The BetterFi Interactive Dashboard provides several comprehensive tools for examining the data used in our project and the model that was built. The dashboard provides three tools: Graphs for Model Variables, Interactive Maps, and the Customizable Model"
+               ),
+             ),
+             hr(),
+             fluidRow(
+               column(10,
+                      h4("Interactive Graphs"),
+                      "The Interactive Graph portion of the dashboard allows the user to create custom graphs from the data used in the vulnerability model. Census tracts from a specific county can be selected, or all tracts from every county can also be displayed."
+               ),
+             ),
+             hr(),
+             fluidRow(
+               column(10,
+                      h4("Interactive Maps"),
+                      "The Interactive Map portion of the dashboard allows the user to view heat maps of any variable included in the vulnerability model. A specific county or multiple ocunties can be selected, or a map containing all counties in Tennessee can be displayed."
+               ),
+             ),
+             hr(),
+             fluidRow(
+               column(10,
+                      h4("Interactive Vulnerability Model"),
+                      "The Interactive Vulnerability Model portion of the dashboard allows for total customization of the methodology for creating and ranking vulnerability scores. The user may select which counties, variables, and variable weights to include in the model. Having selected all of these inputs, the model will produce an ordered list displaying census tracts ranked from most to least vunerable."
+                      ),
+             ),
     ),
     
     #GRAPH PANNE UI-------------------------------------------------------------
@@ -315,9 +364,9 @@ ui <- fluidPage(
     
     #MODEL PANNEL UI------------------------------------------------------------
     tabPanel("Interactive Vunerability Model",
-             h3("Here is our interactive model panel"),
+             h3("Interactive Model Panel"),
              fluidRow(
-               column(4,
+               column(3,
                       
                       #select the county for the betterfi_model
                       selectizeInput("model_counties", "Select Counties",
@@ -325,14 +374,8 @@ ui <- fluidPage(
                                      multiple = TRUE,
                                      selected = "All"
                       ),
-               ),
-               column(4,
-                      br(),
                       actionButton("reset_county", "Click to Reset County"),
-               ),
-             ),
-             fluidRow(
-               column(6,
+                      br(), hr(), 
                       #select the variable(s) to include in the betterfi_model
                       selectizeInput(
                         inputId = "vars",
@@ -342,33 +385,30 @@ ui <- fluidPage(
                         selected = c("All"),
                         width = '100%'
                       ),
-               ),
-               column(3, 
-                      br(),
+                      
                       actionButton("equal_weight_button", "Click to set the Weights Equally"),
-                      ),
-               column(3, 
-                      br(),
+                      br(), br(),
                       actionButton("reset_button", "Click to Reset the Weights"),
-                      ),
-             ),
+                      br(), hr(),
+                      actionButton("model_button", "Click to Run Model", class="btn-warning")
+               ),
+               column(9,
+                      # tableOutput("model_dt"),
+                      conditionalPanel(
+                        condition = "output.model_output_df != NULL",
+                        DTOutput("model_dt")
+                      ))),
+             br(),
+             hr(),
+             br(),
              fluidRow(
                column(12, 
                       uiOutput("conditional_weight_sliders"),
-               #),
-               #column(3, 
-                      br(), br(), actionButton("model_button", "Click to Run Model"))),
-               
-               
-               
-               # tableOutput("model_dt"),
-               conditionalPanel(
-                 condition = "output.model_output_df != NULL",
-                 DTOutput("model_dt")
-               ),
-             tags$head(tags$style(".leaflet-top {z-index:999!important;}"))
-             ),
+                      br(), br() )),
              
+             tags$head(tags$style(".leaflet-top {z-index:999!important;}"))
+    ),
+    
     
     #TEAM PANNEL UI-------------------------------------------------------------
     tabPanel("Meet The Team",
@@ -407,13 +447,32 @@ server <- function(input, output, session) {
         graph_county <- input$county
       }
       
+      # c("num_lender_circles", "total_population", "avg_income", "percent_noncitizen", 
+      #   "total_percent_highschool", "Divorced", "percent_veteran", "mediangrossrent", 
+      #   "percent_black", "percent_hispaniclat", "Unemployed")
+      
+      # c("Number Of Lenders in 2.5 Mile Radius", "Total Population", "Average Income", "Percentage Noncitizen","Highschool Graduation Rate", "Percentage Divorced", "Percentage Veteran","Median Gross Rent","Percentage African American", "Percentage Hispanic/Latino", "Unemployment Rate")
+      
+      graph_labels <- c(num_lender_circles = "Number Of Lenders in 2.5 Mile Radius", 
+                        total_population = "Total Population", 
+                        avg_income = "Average Income", 
+                        percent_noncitizen = "Percentage Noncitizen",
+                        total_percent_highschool = "Highschool Graduation Rate", 
+                        Divorced = "Percentage Divorced", 
+                        percent_veteran = "Percentage Veteran", 
+                        mediangrossrent = "Median Gross Rent",
+                        percent_black = "Percentage African American", 
+                        percent_hispaniclat = "Percentage Hispanic/Latino", 
+                        Unemployed = "Unemployment Rate")
+      
       #create graph
       ggplot(tn_tract_dash %>% filter(county %in% graph_county),
              # aes_string is used since the inputs are stored as a string
              aes_string(x = input$graph_xvar, y = input$graph_yvar ))+
         geom_point(if(length(graph_county) <= 5){ aes(col = county)})+
         #this add a linear model line of best fit
-        geom_smooth(method = "lm", se = FALSE)
+        geom_smooth(method = "lm", se = FALSE)+ 
+        labs(x = graph_labels[[input$graph_xvar]], y = graph_labels[[input$graph_yvar]])
     }
     
   })
@@ -450,7 +509,7 @@ server <- function(input, output, session) {
     }
     
     nvar <- length(selected_vars)
-    print(nvar)
+    
     
     ncol <- 1 
     column_plan <- list(col1 = c(), 
@@ -512,7 +571,7 @@ server <- function(input, output, session) {
     
     lapply(1:ncol, function(i){
       if(length(column_plan) >= i){
-        column(3, lapply_funk(column_plan[[i]]))
+        column(4, lapply_funk(column_plan[[i]]))
       }
     })
     
@@ -521,7 +580,7 @@ server <- function(input, output, session) {
     #                   lapply_funk(column_plan[[i]])
     #   )
     # }
-  
+    
   })
   
   
@@ -671,7 +730,12 @@ server <- function(input, output, session) {
   })
   
   output$model_dt <- renderDT(
-    model_output_df()
+    model_output_df(),
+    options = list(paging = TRUE, 
+                   pageLength = 20, 
+                   scrollY = '425px', 
+                   scrollX = '450px'),
+    style = 'bootstrap4'
   )
   
   observeEvent(input$reset_county,{
