@@ -98,7 +98,7 @@ tmap_mode("view")
 tm_shape(hamilton_county_lenders)+ 
   tm_dots()+
   tm_shape(hamilton_tract)+
-  tm_polygons(alpha = 0.5)
+  tm_polygons(alpha = 0.2)
 
 #count lenders in each census tract
 st_crs(hamilton_tract$geometry) <- st_crs(hamilton_county_lenders$pnt)
