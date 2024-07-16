@@ -17,8 +17,9 @@ The demographic variables we extracted from the ACS include census-tract percent
 - African American
 - divorced
 - unemployed
-- high-school graduates
-and the area's 
+- high-school graduates <br>
+
+And the area's
 - average median household income
 - median gross rent
 
