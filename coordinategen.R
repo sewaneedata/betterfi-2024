@@ -16,11 +16,13 @@ library(rnaturalearthhires)
 library(sf)
 library(mapsapi)
 
-#load data
+#load data from payday lenders
 payday_info <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1x9KSndXG_z2PusNq0ThaQF40VmzJ7G5A/edit?gid=1545321409#gid=1545321409")
 
+#load data from flex lenders
 flex_info <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1x9KSndXG_z2PusNq0ThaQF40VmzJ7G5A/edit?gid=525051790#gid=525051790")
 
+#load data from title lenders
 title_info <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1x9KSndXG_z2PusNq0ThaQF40VmzJ7G5A/edit?gid=1401445265#gid=14014452650")
 
 #merge individual datasets into one
@@ -29,7 +31,7 @@ total_info<-distinct(total_info, Street, .keep_all=TRUE)
 total_info <- total_info %>% 
   rename(postal_code = `Postal Code`)
 
-#create full address
+#create full address with the segmented address columns from the Tennessee Department of Financial Institutions data
 total_info <- total_info %>% 
   mutate(full_address = paste0(Street,", ",City)) %>% 
   mutate(full_address = paste0(full_address,", ",State)) %>% 
