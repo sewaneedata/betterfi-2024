@@ -64,7 +64,7 @@ The Interactive Vulnerability Model tab allows the user to choose which variable
 8. You can either leave the Project directory name blank to auto fill or add whatever you want to name it then press create project.
 9. Download the included `data` folder, and move it to the project's directory.
 10. Open the `requiredpackages.R` then run it.
-11. **IF YOU ARE NOT USING THE INCLUDED .RData file:** Follow 12-14
+11. **IF YOU ARE NOT USING THE INCLUDED .RData file:** Follow 13-15
 12. Open `coordinategen.R`.
 13. Enter a google api key where it says PUT YOUR GOOGLE MAPS API KEY HERE! on line 53 of `coordinategen.R` and run it (you can get a geocoding API [here](https://developers.google.com/maps/documentation/geocoding/get-api-key)).
 14. Run `coordinategen.R`
