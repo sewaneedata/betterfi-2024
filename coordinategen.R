@@ -50,7 +50,7 @@ total_info <- total_info %>%
     TRUE ~ NA_character_))
 
 #Convert addresses into dataframe
-coord_data_total <- mp_geocode(addresses = total_info$full_address, key = "AIzaSyAaG4e9IKfLvQBEbyUMY2ko-02UjFHe1LQ")
+coord_data_total <- mp_geocode(addresses = total_info$full_address, key = "PUT YOUR GOOGLE MAPS API KEY HERE")
 
 #add coordinate data to master data file
   total_lender_info <-  mp_get_points(coord_data_total)

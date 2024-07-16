@@ -62,14 +62,14 @@ The Interactive Vulnerability Model tab allows the user to choose which variable
 6. Press the green code button and copy the URL.
 7. Paste the URL in the repository URL selection.
 8. You can either leave the Project directory name blank to auto fill or add whatever you want to name it then press create project.
-9. Open the `requiredpackages.R` then run it.
-10. **IF YOU ARE NOT USING THE INCLUDED .RData file:** Open `coordinategen.R`.
-11. Enter a google api key where it says PUT YOUR GOOGLE MAPS API KEY HERE! on line 53 of `coordinategen.R` and run it (you can get a geocoding API [here](https://developers.google.com/maps/documentation/geocoding/get-api-key)).
-12. You can run **
-13.Then open `tennesseem` and run it.
-14.Then open `get_data.R` and run it.
-
-
+9. Download the included `data` folder, and move it to the project's directory.
+10. Open the `requiredpackages.R` then run it.
+11. **IF YOU ARE NOT USING THE INCLUDED .RData file:** Follow 12-14
+12. Open `coordinategen.R`.
+13. Enter a google api key where it says PUT YOUR GOOGLE MAPS API KEY HERE! on line 53 of `coordinategen.R` and run it (you can get a geocoding API [here](https://developers.google.com/maps/documentation/geocoding/get-api-key)).
+14. Run `coordinategen.R`
+15. Open `tennesseemain.R` and run it.
+16. In the folder `BetterFiDashBoard` open `app.R` and click `**Run App**`
 
 ### Preparing the lender info as coordinates:
 - To convert data from licensed lender location information into coordinates that can be plotted on a map you need to run `coordinategen.R`.<br> 
@@ -86,3 +86,12 @@ The Interactive Vulnerability Model tab allows the user to choose which variable
 - To run the dashboard, you need the following 3 .RData files, `tn_tract_dash.RData`, `tn_data.RData`, and `total_lender_info.RData`. <br>
 - Once those 3 are in their proper file directory for the dashboard, the dashboard can be opened in the `BetterFiDashBoard` folder with `app.R`. <br>
 - Once `app.R` is opened you can simply click Run App at the top and it should work.
+
+### File Descriptions
+- `BetterFiDashBoard` - The dashboard is in here, simply open app.R and run app after running `tennesseemain.R`
+- `misc scripts and files` - This includes previous R scripts where we created maps and other testing with our code and model to make sure it was functional before the dashboard.
+- `.gitignore` - This file chooses what files and types of files to not push to github.
+- `betterfi-2024.Rproj` - This is our Rproject file
+- `requiredpackages.R` - This file installs all of the necessary packages to run all of our other scripts.
+- `coordinategen.R` - This file generates `total_lender_info.RData`, which is used by our other scripts.
+- `tennesseemain.R` - This file creates two datasets, `tn_data.RData` and `tn_tract_dash.RData`, which are both used by the dashboard.
