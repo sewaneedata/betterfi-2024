@@ -36,7 +36,11 @@ An important note is that each census tract must contain a nonzero value for eac
 - **IMPORTANT**: To save this dataset and call on the others, the user must have a folder in their project directory called "data".
 
 ### 2. Creating the data file for the dashboard:
-In order to pull variables from the American Community Survey that the dashboard can use, you need to run **tennesseemain.R**, this generates **tn_data.RData**, one of our main datasets with all of our key variables. **tennesseemain.R** also generates **tn_tract_dash.RData** which is a dataset that is used by the dashboard and is a little cleaner for viewing purposes.
+- In order to pull variables from the American Community Survey that the dashboard can use, you need to run **tennesseemain.R**. <br>
+- This generates **tn_data.RData**, one of our main datasets with all of our key variables.<br>
+- **tennesseemain.R** also generates **tn_tract_dash.RData** which is a dataset that is used by the dashboard and is a little cleaner for viewing purposes.
 
 ### 3. Running the dashboard:
-To run the dashboard, you need the following 3 .RData files, **tn_tract_dash.RData**, **tn_data.RData**, and **total_lender_info.RData**, once those 3 are in their proper file directory for the dashboard, the dashboard can be opened in the **BetterFiDashBoard** folder with **app.R**, and once **app.R** is opened you can simply click Run App at the top and it should work.
+- To run the dashboard, you need the following 3 .RData files, **tn_tract_dash.RData**, **tn_data.RData**, and **total_lender_info.RData**. <br>
+- Once those 3 are in their proper file directory for the dashboard, the dashboard can be opened in the **BetterFiDashBoard** folder with **app.R**. <br>
+- Once **app.R** is opened you can simply click Run App at the top and it should work.
