@@ -8,6 +8,7 @@ library(DT)
 library(tidyverse)
 library(shinydashboard)
 library(shinythemes)
+library(readr)
 #call Dashboard Data
 load("../data/tennessee/tn_tract_dash.RData")
 
@@ -230,7 +231,7 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
     select(NAME, weighted_vun, county, any_of(selected_vars)) %>% 
     arrange(desc(weighted_vun)) %>% 
     rename(`Census Tract` = NAME) %>% 
-    rename(`Weighted Vulnerability Score` = weighted_vun)
+    rename(`Weighted Vulnerability Score` = weighted_vun) 
   
   if('vun_lender' %in% names(model_results))
   {model_results <- model_results %>% rename(`Lender Vulnerability` = vun_lender)}
@@ -268,35 +269,80 @@ ui <- fluidPage(
   
   #CREATES SLIDE/PANNELS FOR DATA DISPLAYS
   navlistPanel(
-    "Dashboard Tabs",
+    widths = c(2,10),
     #INTRO PANNEL UI------------------------------------------------------------
     tabPanel("Introduction",
-             h2("Introduction"),
+             fluidRow(
+               column(3,
+                      tags$figure(
+                        tags$img(
+                          src = "orangebetterfi.png",
+                          width = "100%",
+                          alt = "BetterFi Pic"
+                        ),
+                      ),
+               ),
+               column(9,
+                      br(),
+                      h3("What is BetterFi?"),
+                      tags$blockquote(
+                        em("BetterFi is a non-profit, CDFI that offers affordable installment loans along with coaching to help individuals break free from debt traps and become financially stable.")
+                      ),
+                      h3(),
+                      h3("Where does DataLab come in?"),
+                      tags$blockquote(
+                        em("We worked with BetterFi to combat the predatory lending crisis in Tennessee by determining the most susceptible areas to predatory lending in Hamilton and Rutherford Counties."),
+                      ),
+                      ),
+             ),
              fluidRow(
                column(10,
-                      "The BetterFi Interactive Dashboard provides several comprehensive tools for examining the data used in our project and the model that was built. The dashboard provides three tools: Graphs for Model Variables, Interactive Maps, and the Customizable Model"
+                      h3("The Dashboard"),
+                      "To maximaize their impact, BetterFi needs the means to uncover where to most vulnerable areas in Tennessee are. The BetterFi Interactive Dashboard provides several comprehensive tools for predicting vulnerability to predatory lending based on our selected population demographics. The dashboard provides three tools: Graphs for Model Variables, Interactive Maps, and the Customizable Model."
                ),
              ),
              hr(),
              fluidRow(
                column(10,
-                      h4("Interactive Graphs"),
+                      h3("Interactive Graphs"),
                       "The Interactive Graph portion of the dashboard allows the user to create custom graphs from the data used in the vulnerability model. Census tracts from a specific county can be selected, or all tracts from every county can also be displayed."
                ),
              ),
              hr(),
              fluidRow(
                column(10,
-                      h4("Interactive Maps"),
-                      "The Interactive Map portion of the dashboard allows the user to view heat maps of any variable included in the vulnerability model. A specific county or multiple ocunties can be selected, or a map containing all counties in Tennessee can be displayed."
+                      h3("Interactive Maps"),
+                      "The Interactive Map portion of the dashboard allows the user to view heat maps of any variable included in the vulnerability model. A specific county or multiple counties can be selected, or a map containing all counties in Tennessee can be displayed."
                ),
              ),
              hr(),
              fluidRow(
                column(10,
-                      h4("Interactive Vulnerability Model"),
+                      h3("Interactive Vulnerability Model"),
                       "The Interactive Vulnerability Model portion of the dashboard allows for total customization of the methodology for creating and ranking vulnerability scores. The user may select which counties, variables, and variable weights to include in the model. Having selected all of these inputs, the model will produce an ordered list displaying census tracts ranked from most to least vunerable."
-                      ),
+               ),
+             ),
+             # "Number Of Lenders in 2.5 Mile Radius", "Average Income",
+             # "Percentage Noncitizen", "Highschool Graduation Rate",
+             # "Percentage Of Veterans", "Median Gross Rent", "Percentage Divorced",
+             # "Unemployment Rate", "Percentage African American",
+             # "Percentage Hispanic/Latino"
+             hr(),
+             fluidRow(
+               column(11,
+                      h3("Variable Descriptions"),
+                      tags$li(tags$u("Number Of Lenders in 2.5 Mile Radius"), 'is a variable that represents the number of predatory lending locations that are within 2.5 miles of each census tract.'), br(),
+                      tags$li(tags$u('"Average Income"'), 'represents the average median household income for that census tract.'),br(),
+                      tags$li(tags$u('Percentage Noncitizen"'), 'represents percentage of population that is not a US Citizen in each census tract.'),br(),
+                      tags$li(tags$u('"High School Graduation Rate"'), 'represents the percentage of the population that are high school graduates in each census tract.'), br(),
+                      tags$li(tags$u('"Percentage Of Veterans"'), 'represents the percentage of the population that are veterans in each census tract.'), br(), 
+                      tags$li(tags$u('"Median Gross Rent"'), 'represents the median gross rent in dollars for that census tract.'), br(),
+                      tags$li(tags$u('"Percentage Divorced"'), 'represents the percentage of the population that is divorced in each census tract.'), br(),
+                      tags$li(tags$u('"Unemployment Rate"'), 'represents the unemployment rate in each census tract.'), br(),
+                      tags$li(tags$u('"Percentage African American"'), 'represents the percentage of the population that is African American in each census tract.'), br(), 
+                      tags$li(tags$u('"Percentage Hispanic/Latino"'), 'represents the percentage of the population that is Hispanic or Latino in each census tract.'), hr(),
+                      
+               ),
              ),
     ),
     
@@ -364,7 +410,7 @@ ui <- fluidPage(
     
     #MODEL PANNEL UI------------------------------------------------------------
     tabPanel("Interactive Vunerability Model",
-             h3("Interactive Model Panel"),
+             h3("Interactive Vulnerability Model Panel"),
              fluidRow(
                column(3,
                       
@@ -411,10 +457,106 @@ ui <- fluidPage(
     
     
     #TEAM PANNEL UI-------------------------------------------------------------
-    tabPanel("Meet The Team",
-             h3("The BetterFi Team")
-    ),
-    widths = c(2, 10)
+    tabPanel("About Us",
+             hr(),
+             fluidRow(
+               column(4,
+                      tags$figure(
+                        tags$img(
+                          src = "spike.jpg",
+                          width = "100%",
+                          alt = "Picture of Betterfi"
+                        ),
+                      ),
+               ),
+               column(8,
+                      h3("The BetterFi Mission Statement"),
+                      tags$blockquote(
+                        em("Our mission as a non-profit economic justice enterprise is to provide equitable financial services and programming as a pathway out of dependence on predatory loans.")
+                      ),
+                      h3("Spike Hosch |", uiOutput("betterfiurl", inline = TRUE)),
+                      tags$blockquote(
+                        em("Founder and Executive Director")
+                      ),
+               ),
+             ),
+             hr(),
+             fluidRow(
+               column(12, h3("The 2024 DataLab BetterFi Team")),
+             ),
+             br(),
+             fluidRow(
+               column(2,
+                      tags$figure(
+                        tags$img(
+                          src = "buck.jpg",
+                          width = "100%",
+                          alt = "Picture of Buchanan"
+                        ),
+                      ),
+               ),
+               column(10,
+                      style = 'border-left: 2px solid',
+                      h3("W. Buchanan Lindsey |", uiOutput("buckurl", inline = TRUE), "|", a(href = 'mailto:buchananlindsey2002@gmail.com', 'Email Me', inline = TRUE)),
+                      h4("C'25 Economics"),
+               ),
+             ),
+             hr(),
+             fluidRow(
+               column(2,
+                      
+                      tags$figure(
+                        tags$img(
+                          src = "ramzy.jpg",
+                          width = "100%",
+                          alt = "Photo of Ramzy"
+                        ),
+                      ),
+               ),
+               column(10,
+                      style = 'border-left: 2px solid',
+                      h3("Ramzy Maraqa |", uiOutput("ramzyurl", inline = TRUE), "|", a(href = 'mailto:ramzymaraqa02@gmail.com', 'Email Me', inline = TRUE)),
+                      h4("C'25 Finance"),
+                      
+               ),
+             ),
+             hr(),
+             fluidRow(
+               column(2,
+                      
+                      tags$figure(
+                        tags$img(
+                          src = "kyle.jpg",
+                          width = "100%"
+                        ),
+                      ),
+               ),
+               column(10,
+                      style = 'border-left: 2px solid',
+                      h3("Kyle Jones |", uiOutput("kyleurl", inline = TRUE), "|", a(href = 'mailto:kylejonesmlk@gmail.com', 'Email Me', inline = TRUE)),
+                      h4("C'25 Finance"),
+               ),
+             ),
+             hr(),
+             fluidRow(
+               column(2,
+                      
+                      tags$figure(
+                        tags$img(
+                          src = "gavin.jpg",
+                          width = "100%"
+                        ),
+                      ),
+               ),
+               column(10,
+                      style = 'border-left: 2px solid',
+                      h3("Gavin Clark |", uiOutput("gavinurl", inline = TRUE), "|", a(href = 'mailto:gavincnc@icloud.com', 'Email Me', inline = TRUE)),
+                      h4("C'27 History"),
+                      
+               ),
+             ),
+             hr(),
+    )
   )
 )
 
@@ -471,7 +613,9 @@ server <- function(input, output, session) {
              aes_string(x = input$graph_xvar, y = input$graph_yvar ))+
         geom_point(if(length(graph_county) <= 5){ aes(col = county)})+
         #this add a linear model line of best fit
-        geom_smooth(method = "lm", se = FALSE)+ 
+        geom_smooth(#method = "lm", 
+                    #se = FALSE
+                    )+ 
         labs(x = graph_labels[[input$graph_xvar]], y = graph_labels[[input$graph_yvar]])
     }
     
@@ -746,7 +890,34 @@ server <- function(input, output, session) {
       selected = "All"
     )
   })
+  
+  #LINKEDIN LINKS FOR MEET THE TEAM
+  buckurl <- a("LinkedIn", href="https://www.linkedin.com/in/w-buchanan-lindsey-016b47210/")
+  output$buckurl <- renderUI({
+    tagList(buckurl)
+  })
+  ramzyurl <- a("LinkedIn", href="https://www.linkedin.com/in/ramzy-maraqa-1a403328a/")
+  output$ramzyurl <- renderUI({
+    tagList(ramzyurl)
+  })
+  kyleurl <- a("LinkedIn", href="https://www.linkedin.com/in/kyle-jones-908772269/")
+  output$kyleurl <- renderUI({
+    tagList(kyleurl)
+  })
+  gavinurl <- a("LinkedIn", href="https://www.linkedin.com/in/gavin-clark-268b36303/")
+  output$gavinurl <- renderUI({
+    tagList(gavinurl)
+  })
+  betterfiurl <- a("BetterFi Website", href="https://www.betterfi.co/")
+  output$betterfiurl <- renderUI({
+    tagList(betterfiurl)
+  })
+  
+  
 }
+
+
+
 
 
 # Run the application 
