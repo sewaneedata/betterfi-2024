@@ -53,7 +53,7 @@ The Interactive Vulnerability Model tab allows the user to choose which variable
 # How do I run the code?
 
 ### 1. Preparing the lender info as coordinates:
-- To convert data from licensed lender location information into coordinates that can be plotted on a map you need to run coordinategen.R.<br> 
+- To convert data from licensed lender location information into coordinates that can be plotted on a map you need to run **coordinategen.R**.<br> 
 - It will take around 10-20 minutes to get the latitude and longitude points for each address mapped out but this is necessary for the variable n_lenders later on.<br>
 - Additionally, we have tried to provide the user with the **total_lender_info.RData** data file that skips this entire step because it is extremely tedious.<br>
 - **IMPORTANT**: To save this dataset and call on the others, the user must have a folder in their project directory called "data".
