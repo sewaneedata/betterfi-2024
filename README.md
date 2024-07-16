@@ -8,9 +8,9 @@ We have partnered with BetterFi, a non-profit Community Development Financial In
 ## Data
 We obtained our data from 2 main sources: 
 - the Tennessee Depart of Financial Institutions to get information on licensed lenders in Tennessee, including their: 
-  - company names, 
-  - street addresses and 
-  - company and branch ids
+  - company names
+  - street addresses
+  - company and branch IDs
 
 - the American Community Survey for demographic data.
 
