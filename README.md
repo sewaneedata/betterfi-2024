@@ -63,26 +63,26 @@ The Interactive Vulnerability Model tab allows the user to choose which variable
 7. Paste the URL in the repository URL selection.
 8. You can either leave the Project directory name blank to auto fill or add whatever you want to name it then press create project.
 9. Open the `requiredpackages.R` then run it.
-10. Open `addresses.R`.
+10. **IF YOU ARE NOT USING THE INCLUDED .RData file:** Open `coordinategen.R`.
 11. Enter a google api key where it says PUT YOUR GOOGLE MAPS API KEY HERE! on line 53 of `coordinategen.R` and run it (you can get a geocoding API [here](https://developers.google.com/maps/documentation/geocoding/get-api-key)).
 12. You can run **
-13.Then open `bus_funtions.R` and run it.
+13.Then open `tennesseem` and run it.
 14.Then open `get_data.R` and run it.
 
 
 
 ### Preparing the lender info as coordinates:
-- To convert data from licensed lender location information into coordinates that can be plotted on a map you need to run `**`coordinategen.R`**`.<br> 
+- To convert data from licensed lender location information into coordinates that can be plotted on a map you need to run `coordinategen.R`.<br> 
 - It will take around 10-20 minutes to get the latitude and longitude points for each address mapped out but this is necessary for the variable n_lenders later on.<br>
-- Additionally, we have tried to provide the user with the **total_lender_info.RData** data file that skips this entire step because it is extremely tedious.<br>
+- Additionally, we have tried to provide the user with the `total_lender_info.RData` data file that skips this entire step because it is extremely tedious.<br>
 - **IMPORTANT**: To save this dataset and call on the others, the user must have a folder in their project directory called "data".
 
 ### Creating the data file for the dashboard:
-- In order to pull variables from the American Community Survey that the dashboard can use, you need to run **tennesseemain.R**. <br>
-- This generates **tn_data.RData**, one of our main datasets with all of our key variables.<br>
-- **tennesseemain.R** also generates **tn_tract_dash.RData** which is a dataset that is used by the dashboard and is a little cleaner for viewing purposes.
+- In order to pull variables from the American Community Survey that the dashboard can use, you need to run `tennesseemain.R`. <br>
+- This generates `tn_data.RData`, one of our main datasets with all of our key variables.<br>
+- `tennesseemain.R` also generates `tn_tract_dash.RData` which is a dataset that is used by the dashboard and is a little cleaner for viewing purposes.
 
 ### Running the dashboard:
-- To run the dashboard, you need the following 3 .RData files, **tn_tract_dash.RData**, **tn_data.RData**, and **total_lender_info.RData**. <br>
-- Once those 3 are in their proper file directory for the dashboard, the dashboard can be opened in the **BetterFiDashBoard** folder with **app.R**. <br>
-- Once **app.R** is opened you can simply click Run App at the top and it should work.
+- To run the dashboard, you need the following 3 .RData files, `tn_tract_dash.RData`, `tn_data.RData`, and `total_lender_info.RData`. <br>
+- Once those 3 are in their proper file directory for the dashboard, the dashboard can be opened in the `BetterFiDashBoard` folder with `app.R`. <br>
+- Once `app.R` is opened you can simply click Run App at the top and it should work.
