@@ -8,24 +8,24 @@ We have partnered with BetterFi, a non-profit Community Development Financial In
 ## Data
 We obtained our data from 2 main sources: 
 - the Tennessee Depart of Financial Institutions to get information on licensed lenders in Tennessee, including their: 
-  - company names
-  - street addresses
-  - company and branch IDs
+  - Company names
+  - Street addresses
+  - Company and branch IDs
 
 - the American Community Survey for demographic data.
 
 The demographic variables we extracted from the ACS include census-tract percentages of individuals who are: 
-- citizens
-- veterans
+- Citizens
+- Veterans
 - Hispanic or Latino
 - African American
-- divorced
-- unemployed
-- high-school graduates <br>
+- Divorced
+- Unemployed
+- High-school graduates <br>
 
 And the area's
-- average median household income
-- median gross rent
+- Average median household income
+- Median gross rent
 
 # Final Product
 ## Dashboard 
