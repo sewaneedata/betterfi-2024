@@ -6,9 +6,21 @@ The Federal Consumer Protection Bureau estimates that, on average, 12 million Am
 We have partnered with BetterFi, a non-profit Community Development Financial Institution organization that offers affordable installment loans and coaching to help individuals break free from debt traps and become financially independent. We have been working with BetterFi to combat the predatory lending crisis in Hamilton and Rutherford counties by determining the most susceptible areas in these counties. 
 
 ## Data
-We obtained our data from 2 main sources: the Tennessee Depart of Financial Institutions to get information on licensed lenders in Tennessee, their company names, street addresses and company and branch ids, as well as the American Community Survey for demographic data.
+We obtained our data from 2 main sources: 
+- the Tennessee Depart of Financial Institutions to get information on licensed lenders in Tennessee, their company names, street addresses and company and branch ids
+- the American Community Survey for demographic data.
 
-The demographic variables we extracted from the ACS include census-tract percentages of individuals who are citizens, veterans, Hispanic or Latino, African American, divorced, unemployed, high-school graduates, and the area's average median household income, and median gross rent.
+The demographic variables we extracted from the ACS include census-tract percentages of individuals who are: 
+- citizens
+- veterans
+- Hispanic or Latino
+- African American
+- divorced
+- unemployed
+- high-school graduates
+and the area's 
+- average median household income
+- median gross rent
 
 # Final Product
 ## Dashboard 
