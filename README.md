@@ -12,7 +12,10 @@ The demographic variables we extracted from the ACS include census-tract percent
 
 # Final Product
 ## Dashboard 
-Our final product is a dashboard that has 3 main sections, interactive graphs, interactive maps and our interactive vulnerability model. 
+Our final product is a dashboard that has 3 main sections. 
+1. Interactive graphs
+2. Interactive maps
+3. Interactive vulnerability model
 
 ### Interactive Graphs Tab
 The interactive graphs tab allows the user to examine correlations between any 2 of our variables.
