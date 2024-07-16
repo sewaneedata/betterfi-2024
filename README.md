@@ -2,8 +2,13 @@
 ## What is Predatory Lending?
 The Federal Consumer Protection Bureau estimates that, on average, 12 million Americans each year will take out predatory loans to cover an emergency expense. Predatory lending is a practice that takes advantage of low-income communities by exploiting their need for quick cash. Many lenders provide short-term loans that tend to be misleading and often have interest rates over 300%. These loans lead to a cycle of debt and only create more financial stress on the borrowers. 
 
-Who or what is BetterFi?
+## Who or what is BetterFi?
 We have partnered with BetterFi, a non-profit Community Development Financial Institution organization that offers affordable installment loans and coaching to help individuals break free from debt traps and become financially independent. We have been working with BetterFi to combat the predatory lending crisis in Hamilton and Rutherford counties by determining the most susceptible areas in these counties. 
+
+# Data
+We obtained our data from 2 main sources: the Tennessee Depart of Financial Institutions to get information on licensed lenders in Tennessee, their company names, street addresses and company and branch ids, as well as the American Community Survey for demographic data.
+
+The demographic variables we extracted from the ACS include census-tract percentages of individuals who are citizens, veterans, Hispanic or Latino, African American, divorced, unemployed, high-school graduates, and the area's average median household income, and median gross rent.
 
 # Final Product
 ## Dashboard 
@@ -18,6 +23,9 @@ The interactive maps tab allows the user to examine a map of any variable by cou
 ### Interactive Vulnerability Model
 The Interactive Vulnerability Model tab allows the user to choose which variables to examine in our model and set weights for them as well as choosing which county, in order to determine the most vulnerable census tracts in the selection. Depending on which factors the user selects it can change which census tracts are the most vulnerable determined by those variables.
 
+#### How is Vulnerability Determined?
+To determine each census tract's vulnerability we took each census tract's unique attributes as it pertains to each of our variables. Based on these variables, we can determine the vulnerability of each census tract and compare across the census tracts. This vulnerability score can be calculated for each variable within each census tract by using the following equation: <br> Vulnerability = Variable Value (tract specific) / Maximum Variable Value (all tracts). <br>
+An important note is that each census tract must contain a nonzero value for each selected variable for the vulnerability score to be calculated. 
 
 ## How do I run the code?
 
