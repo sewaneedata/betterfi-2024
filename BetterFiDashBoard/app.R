@@ -298,7 +298,7 @@ ui <- fluidPage(
              fluidRow(
                column(10,
                       h3("The Dashboard"),
-                      "To maximaize their impact, BetterFi needs the means to uncover where to most vulnerable areas in Tennessee are. The BetterFi Interactive Dashboard provides several comprehensive tools for predicting vulnerability to predatory lending based on our selected population demographics. The dashboard provides three tools: Graphs for Model Variables, Interactive Maps, and the Customizable Model."
+                      "To maximaize their impact, BetterFi needs the means to uncover where the most vulnerable areas in Tennessee are. The BetterFi Interactive Dashboard provides several comprehensive tools for predicting vulnerability to predatory lending based on our selected population demographics. The dashboard provides three tools: Graphs for Model Variables, Interactive Maps, and the Customizable Model."
                ),
              ),
              hr(),
@@ -333,7 +333,7 @@ ui <- fluidPage(
                       h3("Variable Descriptions"),
                       tags$li(tags$u("Number Of Lenders in 2.5 Mile Radius"), 'is a variable that represents the number of predatory lending locations that are within 2.5 miles of each census tract.'), br(),
                       tags$li(tags$u('"Average Income"'), 'represents the average median household income for that census tract.'),br(),
-                      tags$li(tags$u('Percentage Noncitizen"'), 'represents percentage of population that is not a US Citizen in each census tract.'),br(),
+                      tags$li(tags$u('"Percentage Noncitizen"'), 'represents percentage of population that is not a US Citizen in each census tract.'),br(),
                       tags$li(tags$u('"High School Graduation Rate"'), 'represents the percentage of the population that are high school graduates in each census tract.'), br(),
                       tags$li(tags$u('"Percentage Of Veterans"'), 'represents the percentage of the population that are veterans in each census tract.'), br(), 
                       tags$li(tags$u('"Median Gross Rent"'), 'represents the median gross rent in dollars for that census tract.'), br(),
@@ -534,7 +534,7 @@ ui <- fluidPage(
                column(10,
                       style = 'border-left: 2px solid',
                       h3("Kyle Jones |", uiOutput("kyleurl", inline = TRUE), "|", a(href = 'mailto:kylejonesmlk@gmail.com', 'Email Me', inline = TRUE)),
-                      h4("C'25 Finance"),
+                      h4("C'25 Economics"),
                ),
              ),
              hr(),
@@ -616,7 +616,9 @@ server <- function(input, output, session) {
         geom_smooth(#method = "lm", 
                     #se = FALSE
                     )+ 
-        labs(x = graph_labels[[input$graph_xvar]], y = graph_labels[[input$graph_yvar]])
+        labs(x = graph_labels[[input$graph_xvar]], y = graph_labels[[input$graph_yvar]],
+             title = 'graph_labels[[input$graph_xvar]] "vs" graph_labels[[input$graph_yvar]]'
+             )
     }
     
   })
@@ -636,9 +638,12 @@ server <- function(input, output, session) {
     
     #MAKE MAP!-----
     tmap_mode("view")
-    tm_shape(tn_tract_dash %>% filter(county %in% map_county))+
-      tm_polygons(col = this_map_var, palette = "YlOrRd", alpha = 0.8) +
-      tm_view( control.position = c("left","bottom"))
+    tm_shape(name = "The Layer Title", tn_tract_dash %>% filter(county %in% map_county))+
+      tm_polygons(title = names(map_options)[map_options == this_map_var], col = this_map_var, palette = "YlOrRd", alpha = 0.8) +
+      tm_view(control.position = c("left","bottom"))
+    #FIX THE DAMN LEGEND TITLE!
+    #title = map_options[[input$map_var]] 
+    #WHY THIS NO WORKKKKKKASDAKDLAKSDJKLASJDLAKSDJALKDJAKLS
     
   }) 
   
