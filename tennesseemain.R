@@ -586,7 +586,7 @@ tn_tract <- tn_tract %>% rename(employedpercent = Percent)
 acs_emp_tn2 <- acs_emp_tn2 %>% select(-`Label (Grouping)`,-NAME) %>% 
   pivot_wider(names_from=varname,values_from=values)
 
-#merges marital dataset with tn tract by name and censustract variables.
+#merges employment dataset with tn tract by name and censustract variables.
 tn_tract <- tn_tract %>% 
   left_join(acs_emp_tn2, by = c("NAME" = "censustract"))
 
@@ -604,6 +604,7 @@ tn_tract$county <- gsub(" ", "", tn_tract$county)
 
 save(tn_tract, file="data/tennessee/tn_data.RData")
 
+#this next command keeps only the columns with the following titles
 tn_tract_dash <- tn_tract %>% 
   select(-"GEOID", -"variable", -"estimate", -"moe", -"Now married (except separated)", 
          -"Widowed", -"Separated", -"Never married", -"white", -"black", 
