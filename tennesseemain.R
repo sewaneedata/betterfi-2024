@@ -1,5 +1,5 @@
 # The goal of this file is to generate a mappable polygon as well as our tn_tract  which is our main data file for both our model and dashboard
-#libraries, missing gsheet, readxl and googledrive if needed
+#libraries, missing gsheet, readxl if needed
 library(tidycensus)
 library(tidyverse)
 library(stringr)
@@ -10,6 +10,10 @@ library(rnaturalearthdata)
 library(rnaturalearthhires)
 library(sf)
 library(mapsapi)
+library(googledrive)
+#the idea is that we link the data folder on the google drive to download and be placed in the betterfi-2024 rproject folder
+
+
 
 
 #load coordinate data for all lenders
