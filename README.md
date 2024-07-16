@@ -24,7 +24,7 @@ The interactive maps tab allows the user to examine a map of any variable by cou
 The Interactive Vulnerability Model tab allows the user to choose which variables to examine in our model and set weights for them as well as choosing which county, in order to determine the most vulnerable census tracts in the selection. Depending on which factors the user selects it can change which census tracts are the most vulnerable determined by those variables.
 
 #### How is Vulnerability Determined?
-To determine each census tract's vulnerability we took each census tract's unique attributes as it pertains to each of our variables. Based on these variables, we can determine the vulnerability of each census tract and compare across the census tracts. This vulnerability score can be calculated for each variable within each census tract by using the following equation: <br> Vulnerability = Variable Value (tract specific) / Maximum Variable Value (all tracts). <br>
+To determine each census tract's vulnerability we took each census tract's unique attributes as it pertains to each of our variables. Based on these variables, we can determine the vulnerability of each census tract and compare across the census tracts. This vulnerability score can be calculated for each variable within each census tract by using the following equation: <br> **Vulnerability = Variable Value (tract specific) / Maximum Variable Value (all tracts).** <br>
 An important note is that each census tract must contain a nonzero value for each selected variable for the vulnerability score to be calculated. 
 
 ## How do I run the code?
