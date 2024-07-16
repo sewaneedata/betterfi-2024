@@ -71,22 +71,6 @@ The Interactive Vulnerability Model tab allows the user to choose which variable
 15. Open `tennesseemain.R` and run it.
 16. In the folder `BetterFiDashBoard` open `app.R` and click `**Run App**`
 
-### Preparing the lender info as coordinates:
-- To convert data from licensed lender location information into coordinates that can be plotted on a map you need to run `coordinategen.R`.<br> 
-- It will take around 10-20 minutes to get the latitude and longitude points for each address mapped out but this is necessary for the variable n_lenders later on.<br>
-- Additionally, we have tried to provide the user with the `total_lender_info.RData` data file that skips this entire step because it is extremely tedious.<br>
-- **IMPORTANT**: To save this dataset and call on the others, the user must have a folder in their project directory called "data".
-
-### Creating the data file for the dashboard:
-- In order to pull variables from the American Community Survey that the dashboard can use, you need to run `tennesseemain.R`. <br>
-- This generates `tn_data.RData`, one of our main datasets with all of our key variables.<br>
-- `tennesseemain.R` also generates `tn_tract_dash.RData` which is a dataset that is used by the dashboard and is a little cleaner for viewing purposes.
-
-### Running the dashboard:
-- To run the dashboard, you need the following 3 .RData files, `tn_tract_dash.RData`, `tn_data.RData`, and `total_lender_info.RData`. <br>
-- Once those 3 are in their proper file directory for the dashboard, the dashboard can be opened in the `BetterFiDashBoard` folder with `app.R`. <br>
-- Once `app.R` is opened you can simply click Run App at the top and it should work.
-
 ### File Descriptions
 - `BetterFiDashBoard` - The dashboard is in here, simply open app.R and run app after running `tennesseemain.R`
 - `misc scripts and files` - This includes previous R scripts where we created maps and other testing with our code and model to make sure it was functional before the dashboard.
