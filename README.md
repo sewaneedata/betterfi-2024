@@ -70,7 +70,7 @@ The Interactive Vulnerability Model tab allows the user to choose which variable
 15. Open `coordinategen.R`.
 16. Enter a google api key where it says PUT YOUR GOOGLE MAPS API KEY HERE! on line 53 of `coordinategen.R` and run it (you can get a geocoding API [here](https://developers.google.com/maps/documentation/geocoding/get-api-key)).
 17. Run `coordinategen.R` This **will take time** which is why we **recommend against** running this script to generate `total_lender_info.RData`.
-18. Open `tennesseemain.R` and run it.
+18. Open `tennesseemain.R` and click the button in the code section that says `Source`.
 19. In the folder `BetterFiDashBoard` open `app.R` and click `Run App`
 
 ### File Descriptions
