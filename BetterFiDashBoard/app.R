@@ -231,7 +231,8 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
     select(NAME, weighted_vun, county, any_of(selected_vars)) %>% 
     arrange(desc(weighted_vun)) %>% 
     rename(`Census Tract` = NAME) %>% 
-    rename(`Weighted Vulnerability Score` = weighted_vun) 
+    rename(`Weighted Vulnerability Score` = weighted_vun) %>% 
+    rename(`County` = county)
   
   if('vun_lender' %in% names(model_results))
   {model_results <- model_results %>% rename(`Lender Vulnerability` = vun_lender)}
@@ -331,16 +332,31 @@ ui <- fluidPage(
              fluidRow(
                column(11,
                       h3("Variable Descriptions"),
-                      tags$li(tags$u("Number Of Lenders in 2.5 Mile Radius"), 'is a variable that represents the number of predatory lending locations that are within 2.5 miles of each census tract.'), br(),
-                      tags$li(tags$u('"Average Income"'), 'represents the average median household income for that census tract.'),br(),
-                      tags$li(tags$u('"Percentage Noncitizen"'), 'represents percentage of population that is not a US Citizen in each census tract.'),br(),
-                      tags$li(tags$u('"High School Graduation Rate"'), 'represents the percentage of the population that are high school graduates in each census tract.'), br(),
-                      tags$li(tags$u('"Percentage Of Veterans"'), 'represents the percentage of the population that are veterans in each census tract.'), br(), 
-                      tags$li(tags$u('"Median Gross Rent"'), 'represents the median gross rent in dollars for that census tract.'), br(),
-                      tags$li(tags$u('"Percentage Divorced"'), 'represents the percentage of the population that is divorced in each census tract.'), br(),
-                      tags$li(tags$u('"Unemployment Rate"'), 'represents the unemployment rate in each census tract.'), br(),
-                      tags$li(tags$u('"Percentage African American"'), 'represents the percentage of the population that is African American in each census tract.'), br(), 
-                      tags$li(tags$u('"Percentage Hispanic/Latino"'), 'represents the percentage of the population that is Hispanic or Latino in each census tract.'), hr(),
+                      tags$li(tags$u("Number Of Lenders in 2.5 Mile Radius"), 'is a variable that represents the number of predatory lending locations that are within 2.5 miles of each census tract. This information is crucial because it shows the density of the locations of all the predatory lenders.'), 
+                      
+                      br(),
+                      tags$li(tags$u('"Total Population"'), 'shows the total population of each census tract, and is necessary for calculating percentages for our variables.'),
+                      br(),
+                      tags$li(tags$u('"Average Income"'), 'represents the average median household income for that census tract. This variable is relevant because lenders target low-income communities.'),
+                      br(),
+                      tags$li(tags$u('"Percentage Noncitizen"'), 'represents percentage of population that is not a US Citizen in each census tract. The percentage of non-citizens is important because lenders tend to target minority communities and people who are not U.S. citizens.'),
+                      br(),
+                      tags$li(tags$u('"High School Graduation Rate"'), 'represents the percentage of the population that are high school graduates in each census tract. We included high school graduation rate because predatory lenders tend to target individuals who are less educated.'), 
+                      br(),
+                      tags$li(tags$u('"Percentage Of Veterans"'), 'represents the percentage of the population that are veterans in each census tract. Veterans are a group that has been exploited by predatory lending firms and veterans sometimes struggle financially after serving in the military.'), 
+                      br(), 
+                      tags$li(tags$u('"Median Gross Rent"'), 'represents the median gross rent in dollars for that census tract. Median gross rent is a relevant variable to look at because lenders are often located in communities where the rent is lower as those areas are usually associated with having lower incomes, and lenders target areas with lower income.'), 
+                      br(),
+                      tags$li(tags$u('"Percentage Divorced"'), 'represents the percentage of the population that is divorced in each census tract. Percentage Divorced is a necessary variable as individuals who are divorced tend to be targeted by lenders because they may be struggling financially with things like alimony payments, splitting rent, and child support.'), 
+                      br(),
+                      tags$li(tags$u('"Unemployment Rate"'), 'represents the unemployment rate in each census tract. Predatory Lenders target areas with a higher unemployment rate as individuals who are unemployed may be struggling to make ends meet. These individuals would be more likely to take out a bad loan in these situations.'), 
+                      br(),
+                      tags$li(tags$u('"Percentage African American"'), 'represents the percentage of the population that is African American in each census tract. Percentage of the population that is African-American is relevant because predatory lenders target minority communities and are often located in areas where a high percentage of the population is African-American.
+'), 
+                      br(), 
+                      tags$li(tags$u('"Percentage Hispanic/Latino"'), 'represents the percentage of the population that is Hispanic or Latino in each census tract. The percentage of the population that is Hispanic/Latino is relevant because predatory lenders target minority communities and often hire individuals who speak Spanish to market to Hispanic/Latino individuals.'), 
+                      hr(),
+                      br(),
                       
                ),
              ),
@@ -349,6 +365,7 @@ ui <- fluidPage(
     #GRAPH PANNE UI-------------------------------------------------------------
     tabPanel("Interactive Graphs",
              h3("Interactive Graph Panel"),
+             hr(),
              fluidRow(
                column(4, 
                       
@@ -382,6 +399,7 @@ ui <- fluidPage(
     #MAPS PANNEL UI-------------------------------------------------------------
     tabPanel("Interactive Maps",
              h3("Interactive Map Panel"),
+             hr(),
              fluidRow(
                
                #COLUMN FOR SETTING MAP PARAMETERS
@@ -411,6 +429,7 @@ ui <- fluidPage(
     #MODEL PANNEL UI------------------------------------------------------------
     tabPanel("Interactive Vunerability Model",
              h3("Interactive Vulnerability Model Panel"),
+             hr(),
              fluidRow(
                column(3,
                       
@@ -608,6 +627,9 @@ server <- function(input, output, session) {
                         Unemployed = "Unemployment Rate")
       
       #create graph
+      options(scipen = 1000000)
+      plot_title <- paste0(graph_labels[[input$graph_xvar]], " vs. ",graph_labels[[input$graph_yvar]])
+      
       ggplot(tn_tract_dash %>% filter(county %in% graph_county),
              # aes_string is used since the inputs are stored as a string
              aes_string(x = input$graph_xvar, y = input$graph_yvar ))+
@@ -616,11 +638,12 @@ server <- function(input, output, session) {
         geom_smooth(#method = "lm", 
                     #se = FALSE
                     )+ 
-        labs(x = graph_labels[[input$graph_xvar]], y = graph_labels[[input$graph_yvar]],
-             title = 'graph_labels[[input$graph_xvar]] "vs" graph_labels[[input$graph_yvar]]'
+        labs(x = graph_labels[[input$graph_xvar]], 
+             y = graph_labels[[input$graph_yvar]],
+             title = plot_title
              )
     }
-    
+  
   })
   
   #MAP SERVER===================================================================
@@ -883,7 +906,7 @@ server <- function(input, output, session) {
     options = list(paging = TRUE, 
                    pageLength = 20, 
                    scrollY = '425px', 
-                   scrollX = '450px'),
+                   scrollX = '650px'),
     style = 'bootstrap4'
   )
   
