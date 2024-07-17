@@ -27,7 +27,8 @@ county_names <- c("All", sort(unique(as.character(tn_tract_dash$county))))
 model_vars <- c("All", "weight_lender", "weight_income", "weight_noncitizen", "weight_highschool",
                 "weight_veteran", "weight_mediangrossrent", "weight_divorced", "weight_unemployed",
                 "weight_black", "weight_hispaniclat")
-names(model_vars) <- c("All", "Number Of Lenders in 2.5 Mile Radius", "Average Income",
+#rename model_vars for cleaner display of choices on dashboard
+names(model_vars) <- c("All", "Lenders within a 2.5 Mile Radius", "Average Income",
                        "Percentage Noncitizen", "Highschool Graduation Rate",
                        "Percentage Of Veterans", "Median Gross Rent", "Percentage Divorced",
                        "Unemployment Rate", "Percentage African American",
@@ -35,10 +36,10 @@ names(model_vars) <- c("All", "Number Of Lenders in 2.5 Mile Radius", "Average I
 
 #creates a vector containing all options for the maps panel of the dashboard
 map_options <- c(names(tn_tract_dash %>% select(contains("_group"))))
-map_options <- setdiff(map_options, "geometry")
+map_options <- setdiff(map_options, "geometry") #remove geometry column
 
 #rename map_options so that they are readable on the UI
-names(map_options) <- c("Average Income", "Median Gross Rent", "Percentage Noncitizen","Highschool Graduation Rate", "Percentage Divorced", "Percentage Veteran", "Percentage African American", "Percentage Hispanic/Latino", "Unemployment Rate", "Number Of Lenders in 2.5 Mile Radius")
+names(map_options) <- c("Average Income", "Median Gross Rent", "Percentage Noncitizen","Highschool Graduation Rate", "Percentage Divorced", "Percentage Veteran", "Percentage African American", "Percentage Hispanic/Latino", "Unemployment Rate", "Lenders within a 2.5 Mile Radius")
 
 #creates a vector containing all the possible variables to be used in the 
 #graph panel of the dash board
@@ -46,10 +47,10 @@ graph_vars <- c(as.character(names(tn_tract_dash %>%
                                      select(!contains("_group"))%>% 
                                      select(-"NAME") %>%
                                      select(-"county"))))
-graph_vars <- setdiff(graph_vars, "geometry")
+graph_vars <- setdiff(graph_vars, "geometry")#rename geometry
 
 #rename graph_vars so they're readable on the UI
-names(graph_vars) <- c("Number Of Lenders in 2.5 Mile Radius", "Total Population", "Average Income", "Percentage Noncitizen","Highschool Graduation Rate", "Percentage Divorced", "Percentage Veteran","Median Gross Rent","Percentage African American", "Percentage Hispanic/Latino", "Unemployment Rate")
+names(graph_vars) <- c("Lenders within a 2.5 Mile Radius", "Total Population", "Average Income", "Percentage Noncitizen","Highschool Graduation Rate", "Percentage Divorced", "Percentage Veteran","Median Gross Rent","Percentage African American", "Percentage Hispanic/Latino", "Unemployment Rate")
 
 #BETTERFI_MODEL=================================================================
 
@@ -228,6 +229,8 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
     ) %>%
     arrange(desc(weighted_vun))
   
+  #assign all vulnerability scores to model results to be displayed on the dashboard. 
+  #rename new variables to legible titles
   model_results <- varlist_vun %>% 
     select(NAME, weighted_vun, county, any_of(selected_vars)) %>% 
     arrange(desc(weighted_vun)) %>% 
@@ -235,6 +238,7 @@ betterfi_model <- function(counties, weight_lender, weight_income, weight_noncit
     rename(`Weighted Vulnerability Score` = weighted_vun) %>% 
     rename(`County` = county)
   
+  #Rename the crude vulnerability columns to legible names for the datatable display on the dashboard
   if('vun_lender' %in% names(model_results))
   {model_results <- model_results %>% rename(`Lender Vulnerability` = vun_lender)}
   if('vun_noncitizen' %in% names(model_results))
@@ -295,7 +299,7 @@ ui <- fluidPage(
                       tags$blockquote(
                         em("We worked with BetterFi to combat the predatory lending crisis in Tennessee by determining the most susceptible areas to predatory lending in Hamilton and Rutherford Counties."),
                       ),
-                      ),
+               ),
              ),
              fluidRow(
                column(10,
@@ -324,16 +328,11 @@ ui <- fluidPage(
                       "The Interactive Vulnerability Model portion of the dashboard allows for total customization of the methodology for creating and ranking vulnerability scores. The user may select which counties, variables, and variable weights to include in the model. Having selected all of these inputs, the model will produce an ordered list displaying census tracts ranked from most to least vunerable."
                ),
              ),
-             # "Number Of Lenders in 2.5 Mile Radius", "Average Income",
-             # "Percentage Noncitizen", "Highschool Graduation Rate",
-             # "Percentage Of Veterans", "Median Gross Rent", "Percentage Divorced",
-             # "Unemployment Rate", "Percentage African American",
-             # "Percentage Hispanic/Latino"
              hr(),
              fluidRow(
                column(11,
                       h3("Variable Descriptions"),
-                      tags$li(tags$u("Number Of Lenders in 2.5 Mile Radius"), 'is a variable that represents the number of predatory lending locations that are within 2.5 miles of each census tract. This information is crucial because it shows the density of the locations of all the predatory lenders.'), 
+                      tags$li(tags$u("Lenders within a 2.5 Mile Radius"), 'is a variable that represents the number of predatory lending locations that are within 2.5 miles of each census tract. This information is crucial because it shows the density of the locations of all the predatory lenders.'), 
                       
                       br(),
                       tags$li(tags$u('"Total Population"'), 'shows the total population of each census tract, and is necessary for calculating percentages for our variables.'),
@@ -362,16 +361,12 @@ ui <- fluidPage(
                ),
              ),
     ),
-    
     #GRAPH PANNE UI-------------------------------------------------------------
     tabPanel("Interactive Graphs",
              h3("Interactive Graph Panel"),
              hr(),
              fluidRow(
-               column(4, 
-                      
-                      
-                      
+               column(4,
                       #creates drop down for county selection for graph
                       selectizeInput("county", "Select County",
                                      choices = county_names,
@@ -519,13 +514,13 @@ ui <- fluidPage(
                       style = 'border-left: 2px solid',
                       h3("W. Buchanan Lindsey |", uiOutput("buckurl", inline = TRUE)),
                       h4("C'25 Economics"),
-                      h4(a(href = 'mailto:buchananlindsey2002@gmail.com', 'Email Me', inline = TRUE),": buchananlindsey2002@gmail.com"),
+                      h4(a(href = 'mailto:buchananlindsey2002@gmail.com', 'Email Me', inline = TRUE),
+                         ": buchananlindsey2002@gmail.com"),
                ),
              ),
              hr(),
              fluidRow(
                column(2,
-                      
                       tags$figure(
                         tags$img(
                           src = "ramzy.jpg",
@@ -539,7 +534,6 @@ ui <- fluidPage(
                       h3("Ramzy Maraqa |", uiOutput("ramzyurl", inline = TRUE)),
                       h4("C'25 Finance"),
                       h4(a(href = 'mailto:ramzymaraqa02@gmail.com', 'Email Me', inline = TRUE),": ramzymaraqa02@gmail.com"),
-                      
                ),
              ),
              hr(),
@@ -571,12 +565,11 @@ ui <- fluidPage(
                         ),
                       ),
                ),
-              
                column(10,
                       gavinemail <- "gavincnc@icloud.com",
                       style = 'border-left: 2px solid',
                       h3("Gavin Clark |", uiOutput("gavinurl", inline = TRUE) 
-                          ),
+                      ),
                       h4("C'27 History"),
                       h4(a(href = 'mailto:gavincnc@icloud.com', 'Email Me', inline = TRUE),": gavincnc@icloud.com"),
                ),
@@ -614,14 +607,8 @@ server <- function(input, output, session) {
       } else {
         graph_county <- input$county
       }
-      
-      # c("num_lender_circles", "total_population", "avg_income", "percent_noncitizen", 
-      #   "total_percent_highschool", "Divorced", "percent_veteran", "mediangrossrent", 
-      #   "percent_black", "percent_hispaniclat", "Unemployed")
-      
-      # c("Number Of Lenders in 2.5 Mile Radius", "Total Population", "Average Income", "Percentage Noncitizen","Highschool Graduation Rate", "Percentage Divorced", "Percentage Veteran","Median Gross Rent","Percentage African American", "Percentage Hispanic/Latino", "Unemployment Rate")
-      
-      graph_labels <- c(num_lender_circles = "Number Of Lenders in 2.5 Mile Radius", 
+      #rename graph_labels for the drop down box on the dashboard
+      graph_labels <- c(num_lender_circles = "Lenders within a 2.5 Mile Radius", 
                         total_population = "Total Population", 
                         avg_income = "Average Income", 
                         percent_noncitizen = "Percentage Noncitizen",
@@ -646,14 +633,14 @@ server <- function(input, output, session) {
         geom_point(if(length(graph_county) <= 5){ aes(col = county)})+
         #this add a linear model line of best fit
         geom_smooth(#method = "lm", 
-                    #se = FALSE
-                    )+ 
+          #se = FALSE
+        )+ 
         labs(x = graph_labels[[input$graph_xvar]], 
              y = graph_labels[[input$graph_yvar]],
              title = plot_title
-             )
+        )
     }
-  
+    
   })
   
   #MAP SERVER===================================================================
@@ -674,12 +661,8 @@ server <- function(input, output, session) {
     tm_shape(name = "The Layer Title", tn_tract_dash %>% filter(county %in% map_county))+
       tm_polygons(title = names(map_options)[map_options == this_map_var], col = this_map_var, palette = "YlOrRd", alpha = 0.8) +
       tm_view(control.position = c("left","bottom"))
-    #FIX THE DAMN LEGEND TITLE!
-    #title = map_options[[input$map_var]] 
-    #WHY THIS NO WORKKKKKKASDAKDLAKSDJKLASJDLAKSDJALKDJAKLS
     
   }) 
-
   
   #MODEL SERVER===================================================================
   
@@ -754,7 +737,6 @@ server <- function(input, output, session) {
     
   })
   
-  
   # Equal Weight Button
   observeEvent(input$equal_weight_button, {
     # Set all of the weights to 0 first
@@ -787,7 +769,6 @@ server <- function(input, output, session) {
       updateSliderInput(session, variable, value = 0)
     }
   })
-  
   
   # This is a reactive value that will store the sum of the weights and update as input changes
   weight_sum <- reactiveVal(0)
