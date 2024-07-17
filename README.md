@@ -65,11 +65,11 @@ The Interactive Vulnerability Model tab allows the user to choose which variable
 10. Paste the URL in the repository URL selection.
 11. You can either leave the Project directory name blank to auto fill or add whatever you want to name it then press create project.
 12. Download the `data` folder from google drive, and move it to the project's directory.
-13. Open the `requiredpackages.R` then run it.
+13. Open the `requiredpackages.R` then click the button in the code section that says `Source`.
 14. **IF YOU ARE NOT USING THE INCLUDED .RData file:** Follow 15-17
 15. Open `coordinategen.R`.
 16. Enter a google api key where it says PUT YOUR GOOGLE MAPS API KEY HERE! on line 53 of `coordinategen.R` and run it (you can get a geocoding API [here](https://developers.google.com/maps/documentation/geocoding/get-api-key)).
-17. Run `coordinategen.R` This **will take time** which is why we **recommend against** running this script to generate `total_lender_info.RData`.
+17. Run `coordinategen.R` by clicking the button in the code section that says `Source`. This **will take time** which is why we **recommend against** running this script to generate `total_lender_info.RData`.
 18. Open `tennesseemain.R` and click the button in the code section that says `Source`.
 19. In the folder `BetterFiDashBoard` open `app.R` and click `Run App`
 
