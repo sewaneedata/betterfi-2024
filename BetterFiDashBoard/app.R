@@ -9,7 +9,6 @@ library(tidyverse)
 library(shinydashboard)
 library(shinythemes)
 library(readr)
-library(rclipboard)
 
 #call Dashboard Data
 load("../data/tennessee/tn_tract_dash.RData")
@@ -680,139 +679,81 @@ server <- function(input, output, session) {
     #WHY THIS NO WORKKKKKKASDAKDLAKSDJKLASJDLAKSDJALKDJAKLS
     
   }) 
+
+  
+  #MODEL SERVER===================================================================
   
   # Creating the conditionally shown sliders for each variable
   output$conditional_weight_sliders <- renderUI({
     
+    # Getting the selected variables
     selected_vars <- input$vars
+    # If the only selected variable is 'All', get the list of all of the variable names
     if(length(selected_vars) == 1 && selected_vars == 'All'){
       selected_vars = model_vars[model_vars != 'All']
-    }else{
+    }
+    # Otherwise, just remove 'All' from the list
+    else{
       selected_vars <- selected_vars[selected_vars != "All"]
     }
     
-    nvar <- length(selected_vars)
+    # This will hold all of the sliders and organize them neatly
+    panel <- inputPanel()
     
-    
-    ncol <- 1 
-    column_plan <- list(col1 = c(), 
-                        col2 = c(), 
-                        col3 = c())
-    if(nvar <= 3){
-      ncol <- 1
-      column_plan[[1]] <- selected_vars[1:length(selected_vars)]
-    }
-    if(nvar > 3 & nvar <= 6){
-      ncol <- 2
-      column_plan[[1]] <- selected_vars[1:3]
-      column_plan[[2]] <- selected_vars[4:length(selected_vars)]
-    }
-    if(nvar > 6){
-      ncol <- 3
-      column_plan[[1]] <- selected_vars[1:3]
-      column_plan[[2]] <- selected_vars[4:6]
-      column_plan[[3]] <- selected_vars[7:length(selected_vars)]
-    }
-    
-    lapply_funk <- function(model_vars_for_this_column){
-      lapply(model_vars_for_this_column, function(variable) {
-        #lapply(model_vars[model_vars != "All"], function(variable) {
-        conditionalPanel(
-          condition = paste0(
-            "input.vars.includes('",
-            variable,
-            "') || (input.vars.includes('All') && input.vars.length == 1)"
+    # This loops through all of the variables and makes the sliders for each one
+    sliders <- lapply(model_vars[model_vars != 'All'], function(variable) {
+      # This div is important for formatting the sliders into an automatic grid in the inputPanel()
+      # It also separates each of the sliders into their own container that can be hidden
+      div(
+        # Giving the div a unique name based on the variable
+        id = paste0(variable, "_div"),
+        # Hiding the divs with unselected variables
+        style = ifelse(!variable %in% selected_vars, "display:none", ""),
+        # Generating the actual sliderInput()
+        sliderInput(
+          inputId = variable,
+          label = names(model_vars)[model_vars == variable],
+          min = 0,
+          # If the input weight is null because it hasn't been loaded yet, set the max to 1
+          # Otherwise, set the max to 1 minus the sum of the other weights (rounded to four digits)
+          max = ifelse(
+            is.null(input[[variable]]),
+            1,
+            round(1 - (weight_sum() - input[[variable]]), digits = 4)
           ),
-          # uiOutput(variable)
-          sliderInput(
-            inputId = variable,
-            label = names(model_vars)[model_vars == variable],
-            min = 0,
-            # If the input weight is null because it hasn't been loaded yet, set the max to 1
-            # Otherwise, set the max to 1 minus the sum of the other weights
-            max = ifelse(
-              is.null(input[[variable]]),
-              1,
-              round(1 - (weight_sum() - input[[variable]])
-                    , 4
-                    )
-            ),
-            # If the input weight is null because it hasn't been loaded yet or if the variable input
-            # is not just "All", set it equal to 0, otherwise, set it equal to itself so that it
-            # doesn't get reset to 0 when other weight inputs change
-            value = ifelse(
-              is.null(input[[variable]]) | (!variable %in% input$vars & !("All" %in% input$vars & length(input$vars) == 1)),
-              0,
-              input[[variable]]
-            ),
-            # Only increase or decrease the value in steps of 0.01 to prevent any horrible fractions
-            # and scientific notation
-            round = TRUE,
-            step = 0.0001
-          )
+          # If the input weight is null because it hasn't been loaded yet or if the variable input
+          # is not just "All", set it equal to 0, otherwise, set it equal to itself so that it
+          # doesn't get reset to 0 when other weight inputs change
+          value = ifelse(
+            is.null(input[[variable]]) | (!variable %in% input$vars & !("All" %in% input$vars & length(input$vars) == 1)),
+            0,
+            input[[variable]]
+          ),
+          # Round the input to the nearest four digits
+          round = 4,
+          # Only increase or decrease the value in steps of 0.01 to prevent any horrible fractions
+          # and scientific notation
+          step = 0.0001
         )
-      })
-    }
-    
-    lapply(1:ncol, function(i){
-      if(length(column_plan) >= i){
-        column(4, lapply_funk(column_plan[[i]]))
-      }
+      )
     })
     
-    # for(i in 1:ncol){
-    #   column(3,
-    #                   lapply_funk(column_plan[[i]])
-    #   )
-    # }
+    # Setting the contents of the inputPanel() to the sliders
+    panel <- tagSetChildren(
+      panel,
+      # This div tells the sliders to automatically format themselves into a grid from left to right
+      # then top to bottom
+      HTML("<div class = 'shiny-flow-layout'>"),
+      # This gets the contents of the sliders vector and passes them through one by one
+      # Excluding the '!!!' would leave them in a vector and Shiny would put them in an incorrectly
+      # formatted div which would prevent the neat automatic grid formatting
+      !!!sliders,
+      # Closing the div
+      HTML("</div>")
+    )
     
   })
   
-  
-  #MODEL SERVER===================================================================
-  # This changes the input weights to 0 if they become unselected
-  variable_selection_observer <- observe({
-    # If All isn't the only selected option
-    if(!(length(input$vars) == 1 && "All" %in% input$vars)) {
-      # Iterate through the model variables
-      for(variable in model_vars[model_vars != "All"]) {
-        # If the variable isn't selected, set it to 0
-        if(!variable %in% input$vars) {
-          updateSliderInput(session, variable, value = 0)
-        }
-      }
-    }
-  })
-  
-  # observeEvent(weight_sum(), {
-  #   print(paste0("Weight Sum = ", weight_sum()))
-  # })
-  # 
-  # observeEvent(
-  #   input$weight_lender |
-  #     input$weight_income |
-  #     input$weight_noncitizen |
-  #     input$weight_highschool |
-  #     input$weight_veteran |
-  #     input$weight_mediangrossrent |
-  #     input$weight_divorced |
-  #     input$weight_unemployed |
-  #     input$weight_black |
-  #     input$weight_hispaniclat,
-  #   {
-  #     print("Input Weight Changes Detected:")
-  #     print(paste0("Weight Income = ", input$weight_income))
-  #     print(paste0("Weight Lender = ", input$weight_lender))
-  #     print(paste0("Weight Noncitizen = ", input$weight_noncitizen))
-  #     print(paste0("Weight Highschool = ", input$weight_highschool))
-  #     print(paste0("Weight Veteran = ", input$weight_veteran))
-  #     print(paste0("Weight Mediangrossrent = ", input$weight_mediangrossrent))
-  #     print(paste0("Weight Divorced = ", input$weight_divorced))
-  #     print(paste0("Weight Unemployed = ", input$weight_unemployed))
-  #     print(paste0("Weight Black = ", input$weight_black))
-  #     print(paste0("Weight Hispaniclat = ", input$weight_hispaniclat))
-  #   }
-  # )
   
   # Equal Weight Button
   observeEvent(input$equal_weight_button, {
