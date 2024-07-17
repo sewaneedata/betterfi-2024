@@ -10,10 +10,6 @@ library(rnaturalearthdata)
 library(rnaturalearthhires)
 library(sf)
 library(mapsapi)
-library(googledrive)
-#the idea is that we link the data folder on the google drive to download and be placed in the betterfi-2024 rproject folder
-
-
 
 
 #load coordinate data for all lenders
