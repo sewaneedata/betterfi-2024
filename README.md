@@ -65,7 +65,8 @@ The Interactive Vulnerability Model tab allows the user to choose which variable
 9. Press the green code button and copy the URL.
 10. Back in RStudio, paste the URL in the repository URL selection.
 11. You can either leave the Project directory name blank to auto fill or add whatever you want to name it then press create project.
-12. Download the `data` folder from google drive, and move it to the project's directory.
+12. Download the `data` folder from Google Drive, and move it to the project's directory.
+The data folder can be downloaded via [this link](https://drive.google.com/drive/folders/1ks9Fw4AURkjYdjR4NuIfG3biKIZOZfSO?usp=drive_link).
 13. Open the `requiredpackages.R` then click the button in the code section that says `Source`.
 14. **IF YOU ARE NOT USING THE INCLUDED .RData FILE:** Follow Steps 15-17.
 15. Open `coordinategen.R`.
