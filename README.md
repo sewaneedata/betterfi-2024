@@ -52,18 +52,30 @@ The Interactive Vulnerability Model tab allows the user to choose which variable
 
 # How do I run the code?
 
-### 1. Preparing the lender info as coordinates:
-- To convert data from licensed lender location information into coordinates that can be plotted on a map you need to run coordinategen.R.<br> 
-- It will take around 10-20 minutes to get the latitude and longitude points for each address mapped out but this is necessary for the variable n_lenders later on.<br>
-- Additionally, we have tried to provide the user with the **total_lender_info.RData** data file that skips this entire step because it is extremely tedious.<br>
-- **IMPORTANT**: To save this dataset and call on the others, the user must have a folder in their project directory called "data".
+### Setup:
+1. Install `RStudio` (Learn how to do that [here](https://github.com/git-guides/install-git)).
+2. Create a file that will hold all the files for this project.
+2. Open `Rstudio` and click the little icon with a r in a cube on the top left.
+3. Then press Version Control.
+4. Then press Git.
+5. Now in Github find the repository and go to the code tab.
+6. Press the green code button and copy the URL.
+7. Paste the URL in the repository URL selection.
+8. You can either leave the Project directory name blank to auto fill or add whatever you want to name it then press create project.
+9. Download the `data` folder from google drive, and move it to the project's directory.
+10. Open the `requiredpackages.R` then run it.
+11. **IF YOU ARE NOT USING THE INCLUDED .RData file:** Follow 13-15
+12. Open `coordinategen.R`.
+13. Enter a google api key where it says PUT YOUR GOOGLE MAPS API KEY HERE! on line 53 of `coordinategen.R` and run it (you can get a geocoding API [here](https://developers.google.com/maps/documentation/geocoding/get-api-key)).
+14. Run `coordinategen.R` This **will take time** which is why we **recommend against** running this script to generate `total_lender_info.RData`.
+15. Open `tennesseemain.R` and run it.
+16. In the folder `BetterFiDashBoard` open `app.R` and click `Run App`
 
-### 2. Creating the data file for the dashboard:
-- In order to pull variables from the American Community Survey that the dashboard can use, you need to run **tennesseemain.R**. <br>
-- This generates **tn_data.RData**, one of our main datasets with all of our key variables.<br>
-- **tennesseemain.R** also generates **tn_tract_dash.RData** which is a dataset that is used by the dashboard and is a little cleaner for viewing purposes.
-
-### 3. Running the dashboard:
-- To run the dashboard, you need the following 3 .RData files, **tn_tract_dash.RData**, **tn_data.RData**, and **total_lender_info.RData**. <br>
-- Once those 3 are in their proper file directory for the dashboard, the dashboard can be opened in the **BetterFiDashBoard** folder with **app.R**. <br>
-- Once **app.R** is opened you can simply click Run App at the top and it should work.
+### File Descriptions
+- `BetterFiDashBoard` - The dashboard is in here, simply open app.R and run app after running `tennesseemain.R`
+- `misc scripts and files` - This includes previous R scripts where we created maps and other testing with our code and model to make sure it was functional before the dashboard.
+- `.gitignore` - This file chooses what files and types of files to not push to github.
+- `betterfi-2024.Rproj` - This is our Rproject file
+- `requiredpackages.R` - This file installs all of the necessary packages to run all of our other scripts.
+- `coordinategen.R` - This file generates `total_lender_info.RData`, which is used by our other scripts.
+- `tennesseemain.R` - This file creates two datasets, `tn_data.RData` and `tn_tract_dash.RData`, which are both used by the dashboard.
