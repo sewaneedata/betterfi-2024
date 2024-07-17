@@ -48,37 +48,37 @@ The Interactive Vulnerability Model tab allows the user to choose which variable
 - Based on these variables, we can determine the vulnerability of each census tract and compare across the census tracts. 
 - This vulnerability score can be calculated for each variable within each census tract by using the following equation: <br> 
 **Vulnerability = Variable Value / Maximum Variable Value** <br>
-- The Variable Value is census-tract specific and the Maximum Variable Value is for all census tracts
-- An **important note** is that each census tract must contain a nonzero value for each selected variable for the vulnerability score to be calculated. 
+- The Variable Value is census-tract specific and the Maximum Variable Value is for all census tracts.
+- To avoid inaccuracies, our model only calculates vulnerability scores for census tracts containing values for all variables. 
 
 # How do I run the code?
 
 ### Setup:
 1. Make sure you have git installed (Learn how to do that [here](https://github.com/git-guides/install-git)).  
 2. Install R Studio (Learn how to do that [here](https://posit.co/download/rstudio-desktop/)).  
-3. Create a file that will hold all the files for this project.
+3. Create a folder that will hold all the files for this project.
 4. Open `RStudio`.
-5. In `RStudio` click the little icon with a r in a cube on the top left. (Can also create a new project under the file tab at the top of the screen)
+5. In `RStudio` click the little icon with an R in a cube on the top left. (You can also create a new project under the file tab at the top of the screen.)
 6. Then press Version Control.
 7. Then press Git.
-8. Now in Github find the repository and go to the code tab.
+8. Now, in Github find the repository and go to the code tab.
 9. Press the green code button and copy the URL.
-10. Paste the URL in the repository URL selection.
+10. Back in RStudio, paste the URL in the repository URL selection.
 11. You can either leave the Project directory name blank to auto fill or add whatever you want to name it then press create project.
 12. Download the `data` folder from google drive, and move it to the project's directory.
 13. Open the `requiredpackages.R` then click the button in the code section that says `Source`.
-14. **IF YOU ARE NOT USING THE INCLUDED .RData file:** Follow 15-17
+14. **IF YOU ARE NOT USING THE INCLUDED .RData FILE:** Follow Steps 15-17.
 15. Open `coordinategen.R`.
 16. Enter a google api key where it says PUT YOUR GOOGLE MAPS API KEY HERE! on line 53 of `coordinategen.R` and click the button in the code section that says `Source`. (you can get a geocoding API [here](https://developers.google.com/maps/documentation/geocoding/get-api-key)).
 17. Run `coordinategen.R` by clicking the button in the code section that says `Source`. This **will take time** which is why we **recommend against** running this script to generate `total_lender_info.RData`.
 18. Open `tennesseemain.R` and click the button in the code section that says `Source`.
-19. In the folder `BetterFiDashBoard` open `app.R` and click `Run App`
+19. In the folder `BetterFiDashBoard`, open `app.R` and click `Run App`.
 
 ### File Descriptions
-- `BetterFiDashBoard` - The dashboard is in here, simply open app.R and run app after running `tennesseemain.R`
-- `misc scripts and files` - This includes previous R scripts where we created maps and other testing with our code and model to make sure it was functional before the dashboard.
-- `.gitignore` - This file chooses what files and types of files to not push to github.
-- `betterfi-2024.Rproj` - This is our Rproject file
+- `BetterFiDashBoard` - The dashboard is in this folder. Simply open app.R and run it after running `tennesseemain.R`.
+- `misc scripts and files` - This folder contains previous R scripts used for testing code before implenting into the final script and dashboard.
+- `.gitignore` - This file specifies which files should not be pushed to github.
+- `betterfi-2024.Rproj` - This file stores the project settings.
 - `requiredpackages.R` - This file installs all of the necessary packages to run all of our other scripts.
-- `coordinategen.R` - This file generates `total_lender_info.RData`, which is used by our other scripts.
-- `tennesseemain.R` - This file creates two datasets, `tn_data.RData` and `tn_tract_dash.RData`, which are both used by the dashboard.
+- `coordinategen.R` - This file generates `total_lender_info.RData`, which contains this data for our other scripts.
+- `tennesseemain.R` - This file creates two datasets, `tn_data.RData`. Then `tn_data.RData` is consolidated into `tn_tract_dash.RData`, which is the dataset used by the dashboard.
