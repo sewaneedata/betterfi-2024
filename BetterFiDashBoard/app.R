@@ -9,6 +9,8 @@ library(tidyverse)
 library(shinydashboard)
 library(shinythemes)
 library(readr)
+library(rclipboard)
+
 #call Dashboard Data
 load("../data/tennessee/tn_tract_dash.RData")
 
@@ -516,8 +518,9 @@ ui <- fluidPage(
                ),
                column(10,
                       style = 'border-left: 2px solid',
-                      h3("W. Buchanan Lindsey |", uiOutput("buckurl", inline = TRUE), "|", a(href = 'mailto:buchananlindsey2002@gmail.com', 'Email Me', inline = TRUE)),
+                      h3("W. Buchanan Lindsey |", uiOutput("buckurl", inline = TRUE)),
                       h4("C'25 Economics"),
+                      h4(a(href = 'mailto:buchananlindsey2002@gmail.com', 'Email Me', inline = TRUE),": buchananlindsey2002@gmail.com"),
                ),
              ),
              hr(),
@@ -534,8 +537,9 @@ ui <- fluidPage(
                ),
                column(10,
                       style = 'border-left: 2px solid',
-                      h3("Ramzy Maraqa |", uiOutput("ramzyurl", inline = TRUE), "|", a(href = 'mailto:ramzymaraqa02@gmail.com', 'Email Me', inline = TRUE)),
+                      h3("Ramzy Maraqa |", uiOutput("ramzyurl", inline = TRUE)),
                       h4("C'25 Finance"),
+                      h4(a(href = 'mailto:ramzymaraqa02@gmail.com', 'Email Me', inline = TRUE),": ramzymaraqa02@gmail.com"),
                       
                ),
              ),
@@ -552,8 +556,9 @@ ui <- fluidPage(
                ),
                column(10,
                       style = 'border-left: 2px solid',
-                      h3("Kyle Jones |", uiOutput("kyleurl", inline = TRUE), "|", a(href = 'mailto:kylejonesmlk@gmail.com', 'Email Me', inline = TRUE)),
+                      h3("Kyle Jones |", uiOutput("kyleurl", inline = TRUE)),
                       h4("C'25 Economics"),
+                      h4(a(href = 'mailto:kylejonesmlk@gmail.com', 'Email Me', inline = TRUE),": kylejonesmlk@gmail.com"),
                ),
              ),
              hr(),
@@ -567,11 +572,14 @@ ui <- fluidPage(
                         ),
                       ),
                ),
+              
                column(10,
+                      gavinemail <- "gavincnc@icloud.com",
                       style = 'border-left: 2px solid',
-                      h3("Gavin Clark |", uiOutput("gavinurl", inline = TRUE), "|", a(href = 'mailto:gavincnc@icloud.com', 'Email Me', inline = TRUE)),
+                      h3("Gavin Clark |", uiOutput("gavinurl", inline = TRUE) 
+                          ),
                       h4("C'27 History"),
-                      
+                      h4(a(href = 'mailto:gavincnc@icloud.com', 'Email Me', inline = TRUE),": gavincnc@icloud.com"),
                ),
              ),
              hr(),
@@ -627,7 +635,10 @@ server <- function(input, output, session) {
                         Unemployed = "Unemployment Rate")
       
       #create graph
+      #no more scientific notation on the graphs
       options(scipen = 1000000)
+      
+      #create reactive title 
       plot_title <- paste0(graph_labels[[input$graph_xvar]], " vs. ",graph_labels[[input$graph_yvar]])
       
       ggplot(tn_tract_dash %>% filter(county %in% graph_county),
@@ -722,13 +733,15 @@ server <- function(input, output, session) {
             max = ifelse(
               is.null(input[[variable]]),
               1,
-              round(1 - (weight_sum() - input[[variable]]), 4)
+              round(1 - (weight_sum() - input[[variable]])
+                    , 4
+                    )
             ),
             # If the input weight is null because it hasn't been loaded yet or if the variable input
             # is not just "All", set it equal to 0, otherwise, set it equal to itself so that it
             # doesn't get reset to 0 when other weight inputs change
             value = ifelse(
-              is.null(input[[variable]]) | (!variable %in% input$vars & !("All" %in% input$vars & length(input$vars == 1))),
+              is.null(input[[variable]]) | (!variable %in% input$vars & !("All" %in% input$vars & length(input$vars) == 1)),
               0,
               input[[variable]]
             ),
@@ -839,26 +852,44 @@ server <- function(input, output, session) {
   weight_sum <- reactiveVal(0)
   
   # This updates the weight_sum variable when any weight inputs are changed
+  # weight_change_observer <- observe({
+  #   # Vector of the weight values
+  #   weights <- c(
+  #     input$weight_lender,
+  #     input$weight_income,
+  #     input$weight_noncitizen,
+  #     input$weight_highschool,
+  #     input$weight_veteran,
+  #     input$weight_mediangrossrent,
+  #     input$weight_divorced,
+  #     input$weight_unemployed,
+  #     input$weight_black,
+  #     input$weight_hispaniclat
+  #   )
+  #   
+  #   # Setting the weight_sum variable to the sum of the weights
+  #   weight_sum(sum(weights))
+  # })
+  
+  # This updates the weight_sum variable when any weight inputs are changed
   weight_change_observer <- observe({
-    # Vector of the weight values
-    weights <- c(
-      input$weight_lender,
-      input$weight_income,
-      input$weight_noncitizen,
-      input$weight_highschool,
-      input$weight_veteran,
-      input$weight_mediangrossrent,
-      input$weight_divorced,
-      input$weight_unemployed,
-      input$weight_black,
-      input$weight_hispaniclat
-    )
+    
+    selected_vars <- input$vars
+    if(length(selected_vars) == 1 && selected_vars == 'All'){
+      selected_vars = model_vars[model_vars != 'All']
+    }else{
+      selected_vars <- selected_vars[selected_vars != "All"]
+    }
+    
+    sum_of_weights <- 0
+    for(variable in selected_vars) {
+      sum_of_weights <- sum_of_weights + input[[variable]]
+    }
     
     # Setting the weight_sum variable to the sum of the weights
-    weight_sum(sum(weights))
+    weight_sum(sum_of_weights)
+    
   })
-  
-  
   # Reactive value to store the data frame (table) for the model outputs
   model_output_df <- reactiveVal()
   
