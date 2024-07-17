@@ -77,7 +77,7 @@ The data folder can be downloaded via [this link](https://drive.google.com/drive
 
 ### File Descriptions
 - `BetterFiDashBoard` - The dashboard is in this folder. Simply open app.R and run it after running `tennesseemain.R`.
-- `misc scripts and files` - This folder contains previous R scripts used for testing code before implenting into the final script and dashboard.
+- `misc scripts and files` - This folder contains previous R scripts used for testing code before implementing into the final script and dashboard.
 - `.gitignore` - This file specifies which files should not be pushed to github.
 - `betterfi-2024.Rproj` - This file stores the project settings.
 - `requiredpackages.R` - This file installs all of the necessary packages to run all of our other scripts.
