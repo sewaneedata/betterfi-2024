@@ -566,7 +566,6 @@ ui <- fluidPage(
                       ),
                ),
                column(10,
-                      gavinemail <- "gavincnc@icloud.com",
                       style = 'border-left: 2px solid',
                       h3("Gavin Clark |", uiOutput("gavinurl", inline = TRUE) 
                       ),
